@@ -1,3 +1,4 @@
+import os
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -17,6 +18,7 @@ class Data:
         # Attributes
         self.data = pd.DataFrame()
         self.metadata = dict()
+        self.content_list = {}
 
     def user_input_from_terminal(self):
         """Get path from user's input
@@ -25,24 +27,41 @@ class Data:
             path: str
                 user's input path
         """
-        user_input = input('Give me a number: ')
+        path = input("Enter path of your DATA.TXT (press enter to " +
+                     "set default path): ")
+        if path == "":
+            path = os.path.join(os.getcwd(), 'DATA.TXT')
+        return path
 
-    def open_file(self):
+    def open_file(self, path):
         """Open DATA.TXT from user input
+        Args
+        ----
+            path: str
+                filename to read
+        Returns
+        -------
+            True/False: Bool
+                It indicates if the procedure was successful
+        Raises
+        ------
+            ValueError: Unable to read file
+        """
+        try:
+            data_file = open(path)
+            self.content_list = data_file.readlines()
+            return True
+        except IOError:
+            print("The file does not exist")
+            return False
+
+    def convert_to_csv(self):
+        """convert list to a .csv file
         Returns
         -------
             True/False: Bool
                 It indicates if the procedure was successful
         """
-        try:
-            # read file
-            logFile = r'path\tofile\fileName.txt'
-
-            # open file in write mode
-            report = open(logFile, 'w')
-        except Exception as e:
-            # get line number and error message
-            report.write('an error message')
-
-        finally:
-            report.close()
+        for element in self.content_list:
+            element.strip('\n')
+        print(self.content_list)
