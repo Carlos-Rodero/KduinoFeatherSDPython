@@ -1,13 +1,13 @@
+from utility import Utility
 from data import Data
 
 
 def main():
-    d = Data()
-    path = d.user_input_from_terminal()
-    if d.open_file(path):
-        print("obre el fitxer")
-    d.convert_to_csv()
-
+    path = Utility.user_input_from_terminal()
+    contents = Utility.open_files(path)
+    for content in contents:
+        d = Data(content)
+        d.content
 
 if __name__ == "__main__":
     main()

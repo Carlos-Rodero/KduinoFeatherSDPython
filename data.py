@@ -1,14 +1,15 @@
 import os
+import re
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
 
 class Data:
-    """Class to manage Kduino Feather SD
-    It contains functions related to extract information from user's input.
+    """Class to create a data object from DATA.TXT files
+    It contains functions related to manage this data object
     """
-    def __init__(self):
+    def __init__(self, content):
         """Adding new attributes:
         data -- A pandas DataFrame that contains the measurement values of the
         time series.
@@ -16,52 +17,40 @@ class Data:
         time series.
         """
         # Attributes
+        self.__content = content
         self.data = pd.DataFrame()
         self.metadata = dict()
-        self.content_list = {}
 
-    def user_input_from_terminal(self):
-        """Get path from user's input
-        Returns
-        -------
-            path: str
-                user's input path
-        """
-        path = input("Enter path of your DATA.TXT (press enter to " +
-                     "set default path): ")
-        if path == "":
-            path = os.path.join(os.getcwd(), 'DATA.TXT')
-        return path
+    @property
+    def content(self):
+        self.start_string_metadata = r"METADATA"
+        self.stop_string_metadata = r"DATA"
 
-    def open_file(self, path):
-        """Open DATA.TXT from user input
-        Args
-        ----
-            path: str
-                filename to read
-        Returns
-        -------
-            True/False: Bool
-                It indicates if the procedure was successful
-        Raises
-        ------
-            ValueError: Unable to read file
-        """
-        try:
-            data_file = open(path)
-            self.content_list = data_file.readlines()
-            return True
-        except IOError:
-            print("The file does not exist")
-            return False
+        self.start_string_data = r"DATA"
+        self.stop_string_data = r"METADATA"
 
-    def convert_to_csv(self):
-        """convert list to a .csv file
-        Returns
-        -------
-            True/False: Bool
-                It indicates if the procedure was successful
-        """
-        for element in self.content_list:
-            element.strip('\n')
-        print(self.content_list)
+        patron_metadata = re.compile(r'{}(?P<length>)\s*(?P<table>[\s\S]*?){}'.format(self.start_string_metadata, self.stop_string_metadata))
+
+        patron_data = re.compile(r'{}\s*(?P<length>\d+\.\d+)\s*nm\s*(?P<table>[\s\S]*?){}'.format
+                                 (self.start_string_data,
+                                  self.stop_string_data))
+
+        selected_info = ""
+
+        # Creation of pandas dataframe with useful data
+        # df_final = pd.DataFrame()
+        # output_list = []
+
+        # Regular expression to find the patron
+        for m in re.finditer(patron_metadata, self.__content):
+            selected_info = m.group('table')
+            print(selected_info)
+
+            # data = StringIO(selected_info)
+
+            # create dataframe for this patron iteration
+            # df = pd.read_csv(data, skipinitialspace=True, delimiter=' ')
+        
+
+    
+
