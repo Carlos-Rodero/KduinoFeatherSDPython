@@ -7,7 +7,7 @@ def main():
     contents = Utility.open_files(path)
     for content in contents:
         d = Data(content)
-        d.content
+        d.content_to_dataframe()
 
 if __name__ == "__main__":
     main()

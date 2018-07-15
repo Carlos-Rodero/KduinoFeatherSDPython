@@ -1,5 +1,7 @@
 import os
 import re
+from io import StringIO
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -17,39 +19,62 @@ class Data:
         time series.
         """
         # Attributes
-        self.__content = content
+        self.content = content
         self.data = pd.DataFrame()
-        self.metadata = dict()
+        self.metadata = pd.DataFrame()
 
-    @property
-    def content(self):
+    def content_to_dataframe(self):
         self.start_string_metadata = r"METADATA"
         self.stop_string_metadata = r"DATA"
 
         self.start_string_data = r"DATA"
         self.stop_string_data = r"METADATA"
 
-        patron_metadata = re.compile(r'{}(?P<length>)\s*(?P<table>[\s\S]*?){}'.format(self.start_string_metadata, self.stop_string_metadata))
-
-        patron_data = re.compile(r'{}\s*(?P<length>\d+\.\d+)\s*nm\s*(?P<table>[\s\S]*?){}'.format
-                                 (self.start_string_data,
-                                  self.stop_string_data))
+        metadata_patron = re.compile(r'{}(?P<length>)\s*(?P<table>[\s\S]*?){}'.format(self.start_string_metadata, self.stop_string_metadata))
+        data_patron = re.compile(r'{}(?P<length>)\s*(?P<table>[\s\S]*?){}'.format(self.start_string_data, self.stop_string_data))
 
         selected_info = ""
 
-        # Creation of pandas dataframe with useful data
-        # df_final = pd.DataFrame()
-        # output_list = []
-
-        # Regular expression to find the patron
-        for m in re.finditer(patron_metadata, self.__content):
+        # Regular expression to find the metadata patron
+        for m in re.finditer(metadata_patron, self.content):
+            column_names = []
+            values = []
             selected_info = m.group('table')
-            print(selected_info)
+            lines = selected_info.splitlines()
 
+            for line in lines:
+                column_names.append(line.split(":")[0])
+                '''if line.count(":") > 1:
+                    print("data")
+                    values.append(line.rsplit(":")[-1:])
+                else:
+                    values.append(line.split(":")[1])
+                '''
+
+            data = StringIO(selected_info)
+            # create dataframe for this patron iteration
+            
+            df = pd.read_csv(data, sep=':', skiprows=1, names=column_names, error_bad_lines=False, header=None)
+            print(df)
+            # self.metadata.append(df, ignore_index=True)
+            
+            # print(self.metadata)
+
+        '''
+        # Regular expression to find the data patron
+        for m in re.finditer(data_patron, self.content):
+            selected_info = m.group('table')
+            # print(selected_info)
             # data = StringIO(selected_info)
 
             # create dataframe for this patron iteration
             # df = pd.read_csv(data, skipinitialspace=True, delimiter=' ')
+        '''
+
+        
+
+
+    
         
 
     
