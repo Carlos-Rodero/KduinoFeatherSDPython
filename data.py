@@ -24,6 +24,8 @@ class Data:
         self.metadata = dict()
 
     def content_to_dataframe(self):
+        """
+        """
         self.start_string_metadata = r"METADATA"
         self.stop_string_metadata = r"DATA"
 
@@ -43,34 +45,27 @@ class Data:
             lines = selected_info.splitlines()
 
             for line in lines:
-                column_names.append(line.split(":")[0])
+                key = line.split(":")[0]
                 if line.count(":") > 1:
-                    # print("data")
-                    values.append(line.rsplit(":")[-1:])
+                    date_splitted = (line.rsplit(":")[-3:])
+                    date_splitted = " ".join(date_splitted)
+                    value = date_splitted
+                    self.metadata[key] = value
                 else:
-                    values.append(line.split(":")[1])
-            print(column_names)
-            print(values)
-                
-            data = StringIO(selected_info)
-            # create dataframe for this patron iteration
-            
-            df = pd.read_csv(data, sep=':', skiprows=1, names=column_names, error_bad_lines=False, header=None)
-            # print(df)
-            # self.metadata.append(df, ignore_index=True)
-            
-            # print(self.metadata)
+                    value = line.split(":")[1]
+                    self.metadata[key] = value.strip()
+            print(self.metadata)
 
-        '''
         # Regular expression to find the data patron
         for m in re.finditer(data_patron, self.content):
             selected_info = m.group('table')
-            # print(selected_info)
-            # data = StringIO(selected_info)
+            print(selected_info)
+            data = StringIO(selected_info)
 
             # create dataframe for this patron iteration
-            # df = pd.read_csv(data, skipinitialspace=True, delimiter=' ')
-        '''
+            df = pd.read_csv(data, skipinitialspace=True, delimiter=' ')
+            print(df)
+        
 
         
 
