@@ -21,7 +21,7 @@ class Data:
         # Attributes
         self.content = content
         self.data = pd.DataFrame()
-        self.metadata = pd.DataFrame()
+        self.metadata = dict()
 
     def content_to_dataframe(self):
         self.start_string_metadata = r"METADATA"
@@ -44,18 +44,19 @@ class Data:
 
             for line in lines:
                 column_names.append(line.split(":")[0])
-                '''if line.count(":") > 1:
-                    print("data")
+                if line.count(":") > 1:
+                    # print("data")
                     values.append(line.rsplit(":")[-1:])
                 else:
                     values.append(line.split(":")[1])
-                '''
-
+            print(column_names)
+            print(values)
+                
             data = StringIO(selected_info)
             # create dataframe for this patron iteration
             
             df = pd.read_csv(data, sep=':', skiprows=1, names=column_names, error_bad_lines=False, header=None)
-            print(df)
+            # print(df)
             # self.metadata.append(df, ignore_index=True)
             
             # print(self.metadata)
