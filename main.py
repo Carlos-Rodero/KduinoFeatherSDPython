@@ -7,7 +7,10 @@ def main():
     contents = Utility.open_files(path)
     for content in contents:
         d = Data(content)
-        d.content_to_dataframe()
+        metadata, raw = d.content_to_dataframe()
+        d.to_wf(metadata, raw)
+        exit()
+
 
 if __name__ == "__main__":
     main()
