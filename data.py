@@ -13,19 +13,18 @@ class Data:
     It contains functions related to manage this data object
     """
     def __init__(self, content):
-        """Adding new attributes:
-        data -- A pandas DataFrame that contains the measurement values of the
-        time series.
-        metadata -- A dictionary that contains the metadata information of the
-        time series.
+        """It creates the instance of following variables:
+        content -- a string that contains file's content
         """
-        # Attributes
+        # Instance variable
         self.content = content
-        # self.data = pd.DataFrame()
-        # self.metadata = dict()
 
     def content_to_dataframe(self):
-        """
+        """Get path from user's input
+        Returns
+        -------
+            path: str
+                user's input path
         """
         self.start_string_metadata = r"METADATA"
         self.stop_string_metadata = r"DATA"
@@ -39,6 +38,7 @@ class Data:
         metadata_patron = re.compile(r'{}(?P<length>)\s*(?P<table>[\s\S]*?){}'.
                                      format(self.start_string_metadata,
                                             self.stop_string_metadata))
+
         data_patron = re.compile(r'{}(?P<length>)\s*(?P<table>[\s\S]*?){}'.
                                  format(self.start_string_data,
                                         self.stop_string_data))
@@ -78,7 +78,7 @@ class Data:
             df = pd.read_csv(data, skipinitialspace=True, skiprows=1,
                              delimiter=' ')
         '''
-
+        # Regular expression to find the last data patron
         for m in re.finditer(end_data_patron, self.content):
             selected_info_data = m.group('table')
             data = StringIO(selected_info_data)
@@ -119,5 +119,3 @@ class Data:
         wf.barplot('RED')
         plt.show()
         return wf
-
-

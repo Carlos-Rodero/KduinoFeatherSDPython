@@ -42,21 +42,8 @@ class Utility:
             try:
                 f = open(filename, "r")
                 print("open filename: " + filename)
-                # content = f.read().splitlines()
                 content = f.read()
                 contents.append(content)
             except IOError:
                 print("The file does not exist")
         return contents
-
-    '''def convert_to_csv(self):
-        """convert list to a .csv file
-        Returns
-        -------
-            True/False: Bool
-                It indicates if the procedure was successful
-        """
-        for element in self.content_list:
-            element.strip('\n')
-        print(self.content_list)
-        '''
