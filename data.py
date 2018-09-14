@@ -20,11 +20,15 @@ class Data:
         self.content = content
 
     def content_to_dataframe(self):
-        """Get path from user's input
+        """It converts variable content to dataframe
         Returns
         -------
-            path: str
-                user's input path
+            metadata: dict
+                A dictionary that contains the metadata information of the
+                content
+            df: pandas DataFrame
+                A pandas DataFrame that contains the measurement values of
+                the content
         """
         self.start_string_metadata = r"METADATA"
         self.stop_string_metadata = r"DATA"
@@ -92,6 +96,18 @@ class Data:
         return((metadata.copy(), df.copy()))
 
     def to_wf(self, metadata, raw):
+        """It converts metadata and raw data to WaterFrame object.
+        Parameters
+        ----------
+            metadata: dict
+                Dictionary with metadata information of the content.
+            raw: pandas DataFrame
+                A pandas Dataframe that contains the measurement
+                values of the timeserie.
+        Returns
+        -------
+            wf: WaterFrame object to manage this data series .
+        """
         wf = mooda.WaterFrame()
         wf.metadata = metadata
         wf.data['RED'] = raw[0]
@@ -101,6 +117,15 @@ class Data:
 
         red = {'units': "counts"}
         wf.meaning['RED'] = red
+
+        green = {'units': "counts"}
+        wf.meaning['GREEN'] = green
+
+        blue = {'units': "counts"}
+        wf.meaning['BLUE'] = blue
+
+        clear = {'units': "counts"}
+        wf.meaning['CLEAR'] = clear
 
         for i in range(len(raw.columns)):
             if i < 4:
@@ -116,6 +141,7 @@ class Data:
         wf.data['BLUE_QC'] = 0
         wf.data['CLEAR_QC'] = 0
 
-        wf.barplot('RED')
+        # wf.barplot(['RED', 'GREEN', 'BLUE', 'CLEAR'])
+        wf.tsplot(['RED', 'GREEN', 'BLUE', 'CLEAR'])
         plt.show()
         return wf
