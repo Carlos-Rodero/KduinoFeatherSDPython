@@ -95,7 +95,7 @@ class Data:
 
         return((metadata.copy(), df.copy()))
 
-    def to_wf(self, metadata, raw):
+    def to_wf(self, metadata, raw, cumulative=False):
         """It converts metadata and raw data to WaterFrame object.
         Parameters
         ----------
@@ -127,19 +127,55 @@ class Data:
         clear = {'units': "counts"}
         wf.meaning['CLEAR'] = clear
 
-        for i in range(len(raw.columns)):
-            if i < 4:
-                continue
-            if i % 4 == 0:
-                wf.data['RED'] += raw[i]
-                wf.data['GREEN'] += raw[i+1]
-                wf.data['BLUE'] += raw[i+2]
-                wf.data['CLEAR'] += raw[i+3]
+        if cumulative is True:
+            for i in range(len(raw.columns)):
+                if i < 4:
+                    continue
+                if i % 4 == 0:
+                    wf.data['RED'] += raw[i]
+                    wf.data['GREEN'] += raw[i+1]
+                    wf.data['BLUE'] += raw[i+2]
+                    wf.data['CLEAR'] += raw[i+3]
+        else:
+            wf.resample('S')
+            # we have to add 1 minute at the end
+
+            print(wf.data.index[len(wf.data.index)-1])
+            red_list = []
+            green_list = []
+            blue_list = []
+            clear_list = []
+            for j in range(len(raw.index)):
+                for i in range(len(raw.columns)):
+                    if i % 4 == 0:
+                        red_list.append(raw[i][j])
+                        green_list.append(raw[i+1].iloc[j])
+                        blue_list.append(raw[i+2].iloc[j])
+                        clear_list.append(raw[i+3].iloc[j])
+            red_array = np.array(red_list)
+            green_array = np.array(green_list)
+            blue_array = np.array(blue_list)
+            clear_array = np.array(clear_list)
+            # print(red_array)
+            # print(len(wf.data.index))
+            # wf.data['RED'] = red_array
+            """
+            index_count = 0
+            for i in range(len(raw.columns)):
+                if i % 4 == 0:
+                    print(wf.data.index[0])
+                    wf.data['RED'][wf.data.index[i]] = raw[i]
+                    wf.data['GREEN'].loc[wf.data.index[i+1]] = raw[i+1]
+                    wf.data['BLUE'].loc[wf.data.index[i+2]] = raw[i+2]
+                    wf.data['CLEAR'].loc[wf.data.index[i+3]] = raw[i+3]
+                    index_count += 4"""
 
         wf.data['RED_QC'] = 0
         wf.data['GREEN_QC'] = 0
         wf.data['BLUE_QC'] = 0
         wf.data['CLEAR_QC'] = 0
+
+        # print(wf.data.tail())
 
         return wf
 
