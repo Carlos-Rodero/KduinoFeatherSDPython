@@ -8,7 +8,8 @@ def main():
     for content in contents:
         d = Data(content)
         metadata, raw = d.content_to_dataframe()
-        d.to_wf(metadata, raw)
+        wf = d.to_wf(metadata, raw)
+        d.timeseries_plot(wf)
         exit()
 
 

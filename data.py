@@ -141,7 +141,19 @@ class Data:
         wf.data['BLUE_QC'] = 0
         wf.data['CLEAR_QC'] = 0
 
-        # wf.barplot(['RED', 'GREEN', 'BLUE', 'CLEAR'])
-        wf.tsplot(['RED', 'GREEN', 'BLUE', 'CLEAR'])
-        plt.show()
         return wf
+
+    def timeseries_plot(self, wf):
+        """Makes plots of time series from waterframe parameter.
+        Parameters
+        ----------
+            wf: WaterFrame
+                WaterFrame object to manage this data series.
+        """
+
+        wf.slice_time('20180822120000', '20180822122500')
+        axes = plt.gca()
+        axes.set_ylim([0, 300000])
+        wf.tsplot(['RED', 'GREEN', 'BLUE', 'CLEAR'], rolling=1, ax=axes)
+        plt.title('Figure x')
+        plt.show()
