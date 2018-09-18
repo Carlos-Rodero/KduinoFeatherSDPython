@@ -104,6 +104,8 @@ class Data:
             raw: pandas DataFrame
                 A pandas Dataframe that contains the measurement
                 values of the timeserie.
+            cumulative: boolean, optional (cumulative = False)
+                It makes a cumulative dataframe adding data
         Returns
         -------
             wf: WaterFrame object to manage this data series .
@@ -137,10 +139,13 @@ class Data:
                     wf.data['BLUE'] += raw[i+2]
                     wf.data['CLEAR'] += raw[i+3]
         else:
-            wf.resample('S')
-            # we have to add 1 minute at the end
+            # wf.data = wf.data.resample('T', label='right')
+            # wf.data = wf.data.resample('S')
+            # wf.data = wf.data.resample('S', label='right')
 
-            print(wf.data.index[len(wf.data.index)-1])
+            # we have to add 1 minute at the end
+            # print(wf.data.index)
+            # print(wf.data.index[len(wf.data.index)-1])
             red_list = []
             green_list = []
             blue_list = []
