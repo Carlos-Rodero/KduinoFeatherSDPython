@@ -139,12 +139,9 @@ class Data:
                     wf.data['BLUE'] += raw[i+2]
                     wf.data['CLEAR'] += raw[i+3]
         else:
-            # wf.data = wf.data.resample('T', label='right')
-            # wf.data = wf.data.resample('S')
-            # wf.data = wf.data.resample('S', label='right')
-
-            # we have to add 1 minute at the end
-            # print(wf.data.index)
+            wf.data = wf.data.resample('T', label='right').sum()
+            wf.data = wf.data.resample('S').sum()
+            print(wf.data)
             # print(wf.data.index[len(wf.data.index)-1])
             red_list = []
             green_list = []
