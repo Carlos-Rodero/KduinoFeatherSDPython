@@ -112,6 +112,8 @@ class Data:
         """
         wf = mooda.WaterFrame()
         wf.metadata = metadata
+
+        # Initialize index waterframe
         wf.data['RED'] = raw[0]
         wf.data['GREEN'] = raw[1]
         wf.data['BLUE'] = raw[2]
@@ -130,6 +132,7 @@ class Data:
         wf.meaning['CLEAR'] = clear
 
         if cumulative is True:
+
             for i in range(len(raw.columns)):
                 if i < 4:
                     continue
@@ -139,15 +142,19 @@ class Data:
                     wf.data['BLUE'] += raw[i+2]
                     wf.data['CLEAR'] += raw[i+3]
         else:
-            wf.data = wf.data.resample('T', label='right').sum()
-            wf.data = wf.data.resample('S').sum()
-            print(wf.data)
-            # print(wf.data.index[len(wf.data.index)-1])
+
+            wf.resample('S')
+
+            # Delete last index because it is a minute that we are not going to
+            # use
+            wf.data.drop(wf.data.tail(1).index, inplace=True)
+
+            # Extract data of the dataframe raw
             red_list = []
             green_list = []
             blue_list = []
             clear_list = []
-            for j in range(len(raw.index)):
+            for j in range(len(raw.index)-1):
                 for i in range(len(raw.columns)):
                     if i % 4 == 0:
                         red_list.append(raw[i][j])
@@ -158,40 +165,52 @@ class Data:
             green_array = np.array(green_list)
             blue_array = np.array(blue_list)
             clear_array = np.array(clear_list)
-            # print(red_array)
-            # print(len(wf.data.index))
-            # wf.data['RED'] = red_array
-            """
-            index_count = 0
-            for i in range(len(raw.columns)):
-                if i % 4 == 0:
-                    print(wf.data.index[0])
-                    wf.data['RED'][wf.data.index[i]] = raw[i]
-                    wf.data['GREEN'].loc[wf.data.index[i+1]] = raw[i+1]
-                    wf.data['BLUE'].loc[wf.data.index[i+2]] = raw[i+2]
-                    wf.data['CLEAR'].loc[wf.data.index[i+3]] = raw[i+3]
-                    index_count += 4"""
+
+            wf.data['RED'] = red_array
+            wf.data['GREEN'] = green_array
+            wf.data['BLUE'] = blue_array
+            wf.data['CLEAR'] = clear_array
 
         wf.data['RED_QC'] = 0
         wf.data['GREEN_QC'] = 0
         wf.data['BLUE_QC'] = 0
         wf.data['CLEAR_QC'] = 0
 
-        # print(wf.data.tail())
-
         return wf
 
-    def timeseries_plot(self, wf):
+    def timeseries_cumulative_plot(self, wf, name):
         """Makes plots of time series from waterframe parameter.
         Parameters
         ----------
             wf: WaterFrame
                 WaterFrame object to manage this data series.
+            name: string
+                Name from waterframe metadata
         """
 
         wf.slice_time('20180822120000', '20180822122500')
         axes = plt.gca()
         axes.set_ylim([0, 300000])
         wf.tsplot(['RED', 'GREEN', 'BLUE', 'CLEAR'], rolling=1, ax=axes)
-        plt.title('Figure x')
+        plt.title('Figure {}'.format(name))
         plt.show()
+
+    # def concat_all_wf(self, waterframes):
+        """Concat all waterframes and rename parameters
+        Parameters
+        ----------
+            waterframes: list
+                A list with all waterframes to concat.
+        Returns
+        -------
+            wf_all: WaterFrame object to manage this data series.
+        """
+        """
+        wf_all = mooda.WaterFrame()
+        for wf in waterframes:
+            name = wf.metadata["name"]
+            wf_all.concat(wf)
+            for parameter in wf.parameters():
+                wf_all.rename(parameter, "{}_{}".format(parameter, name))
+        return wf_all
+        """
