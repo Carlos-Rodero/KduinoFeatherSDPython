@@ -44,22 +44,31 @@ def main():
         # slice time
         wf_all.slice_time(start_time, stop_time)
 
-        # resampling data
-        with open('results_correlation_resample.csv', 'w', newline='') as csvfile:
-            results = csv.writer(csvfile, delimiter=',',
-                                 quotechar='|', quoting=csv.QUOTE_MINIMAL)
-            wf_all.resample("10S")
+        # create .csv with resampling data
+        with open('results_correlation_resample.csv', 'w') as csvfile:
+            writer = csv.writer(csvfile, delimiter=',', lineterminator='\n')
+            header = ['sensor'] + list(range(1, 60))
+            writer.writerow(header)
 
-            print("14 - 15", wf_all.corr("CLEAR_14", "CLEAR_15"))
-            print("14 - 17", wf_all.corr("CLEAR_14", "CLEAR_17"))
-            print("14 - 18", wf_all.corr("CLEAR_14", "CLEAR_18"))
-            print("14 - 19", wf_all.corr("CLEAR_14", "CLEAR_19"))
-            print("15 - 17", wf_all.corr("CLEAR_15", "CLEAR_17"))
-            results.writerow(["Sensors", "1S", "2S", "3S"])
-            results.writerow(["14 - 15", wf_all.corr("CLEAR_14", "CLEAR_15")])
-        # bucle de 1 a 59 S
-        # fer totes les correlacions entre tots els sensors
-        # buscar per escriure csv en iteració
+            for i in range(1, 60):
+                # copy waterframe to avoid resample the same waterframe in
+                # loop
+                wf_all_copy = WaterFrame()
+                wf_all_copy.data = wf_all.data.copy()
+                wf_all_copy.resample("{}S".format(i))
+
+                # fer totes les correlacions entre tots els sensors
+                # buscar per escriure csv en iteració
+
+                row = [wf_all_copy.corr("CLEAR_14", "CLEAR_15")]
+                writer.writerow([row])
+
+                print("14 - 15 ", wf_all_copy.corr("CLEAR_14", "CLEAR_15"))
+                # print("14 - 17", wf_all_copy.corr("CLEAR_14", "CLEAR_17"))
+                # print("14 - 18", wf_all_copy.corr("CLEAR_14", "CLEAR_18"))
+                # print("14 - 19", wf_all_copy.corr("CLEAR_14", "CLEAR_19"))
+                # print("15 - 17", wf_all_copy.corr("CLEAR_15", "CLEAR_17"))
+        """
         wf_all.resample("10S")
         print("14 - 15", wf_all.corr("CLEAR_14", "CLEAR_15"))
         print("14 - 17", wf_all.corr("CLEAR_14", "CLEAR_17"))
@@ -68,12 +77,14 @@ def main():
         print("15 - 17", wf_all.corr("CLEAR_15", "CLEAR_17"))
         # print(wf_all.max_diff("CLEAR_14", "CLEAR_19"))
 
-        """wf_all.scatter_matrix(keys=["CLEAR_14", "CLEAR_15", "CLEAR_17",
-                                    "CLEAR_18", "CLEAR_19"])"""
+        wf_all.scatter_matrix(keys=["CLEAR_14", "CLEAR_15", "CLEAR_17",
+                                    "CLEAR_18", "CLEAR_19"])
         wf_all.tsplot(["CLEAR_14", "CLEAR_15", "CLEAR_17",
                        "CLEAR_18", "CLEAR_19"])
 
         plt.show()
+
+        """
 
     '''LOCH LEVEN TRAY'''
     # horizontal sensor analysis
