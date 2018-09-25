@@ -1,11 +1,12 @@
 import os
 import re
 from io import StringIO
-
 import matplotlib.pyplot as plt
-import mooda
+import mooda_code.mooda as mooda
 import numpy as np
 import pandas as pd
+import csv
+from itertools import combinations
 
 
 class Data:
@@ -177,6 +178,107 @@ class Data:
         wf.data['CLEAR_QC'] = 0
 
         return wf
+
+    def horizontal_sensor_analysis(self, waterframes, start_time, stop_time):
+        """Analysis of different sensors in horizontal
+        Parameters
+        ----------
+            waterframes: list
+                List with waterframes from sensors.
+            start_time: str
+                String about start time to slice.
+            stop_time: str
+                String about stop time to slice.
+        Returns
+        -------
+            wf: WaterFrame object to manage this data series .
+        """
+        # Concat all waterframes and rename parameters
+        wf_all = mooda.WaterFrame()
+        names = []
+        for wf in waterframes:
+            name = wf.metadata["name"]
+            names.append(name)
+            wf_all.concat(wf)
+            for parameter in wf.parameters():
+                wf_all.rename(parameter, "{}_{}".format(parameter, name))
+
+            '''individual analysis for each sensor'''
+            '''uncomment next lines to do cumulative analysis'''
+            # plot timeseries_cumulative
+            # d.timeseries_cumulative_plot(wf, name)
+            # wf.tsplot(['RED', 'GREEN', 'BLUE', 'CLEAR'], rolling=1)
+            # plt.show()
+
+        # slice time
+        wf_all.slice_time(start_time, stop_time)
+
+        # hist
+        '''
+        wf_all.hist(parameter=["CLEAR_14", "CLEAR_15", "CLEAR_17", "CLEAR_18",
+                               "CLEAR_19"], mean_line=True)
+        plt.show()
+        '''
+        # create .csv with resampling data
+        with open('results_correlation_resample.csv', 'w') as csvfile:
+            writer = csv.writer(csvfile, delimiter=',', lineterminator='\n')
+            header = ['sensor'] + list(range(1, 60))
+            writer.writerow(header)
+
+            df = pd.DataFrame()
+            label_index = []
+            for i in range(1, 60):
+                # copy waterframe to avoid resample the same waterframe in
+                # loop
+                wf_all_copy = mooda.WaterFrame()
+                wf_all_copy.data = wf_all.data.copy()
+                wf_all_copy.resample("{}S".format(i))
+
+                # combination of parameters for pairs
+                for combo in combinations(wf_all_copy.parameters(), 2):
+                    param_name_1 = " ".join(re.findall("[a-zA-Z]+", combo[0]))
+                    param_name_2 = " ".join(re.findall("[a-zA-Z]+", combo[1]))
+                    if param_name_1 == param_name_2:
+                        # print(combo, wf_all_copy.corr(combo[0], combo[1]), i)
+                        if i == 1:
+                            label_index.append("{}_{}".format(combo[0],
+                                                              combo[1]))
+
+                            df = df.append({i: wf_all_copy.corr(combo[0],
+                                                                combo[1])},
+                                           ignore_index=True)
+                        else:
+                            df[i] = wf_all_copy.corr(combo[0], combo[1])
+            print(df)
+            '''
+                row = [wf_all_copy.corr("CLEAR_14", "CLEAR_15")]
+                writer.writerow([row])
+            '''
+                # print(wf_all_copy.parameters)
+
+                # print("14 - 15", wf_all_copy.corr("CLEAR_14", "CLEAR_15"))
+                # print("14 - 17", wf_all_copy.corr("CLEAR_14", "CLEAR_17"))
+                # print("14 - 18", wf_all_copy.corr("CLEAR_14", "CLEAR_18"))
+                # print("14 - 19", wf_all_copy.corr("CLEAR_14", "CLEAR_19"))
+                # print("15 - 17", wf_all_copy.corr("CLEAR_15", "CLEAR_17"))
+
+        """
+        wf_all.resample("10S")
+        print("14 - 15", wf_all.corr("CLEAR_14", "CLEAR_15"))
+        print("14 - 17", wf_all.corr("CLEAR_14", "CLEAR_17"))
+        print("14 - 18", wf_all.corr("CLEAR_14", "CLEAR_18"))
+        print("14 - 19", wf_all.corr("CLEAR_14", "CLEAR_19"))
+        print("15 - 17", wf_all.corr("CLEAR_15", "CLEAR_17"))
+        # print(wf_all.max_diff("CLEAR_14", "CLEAR_19"))
+
+        wf_all.scatter_matrix(keys=["CLEAR_14", "CLEAR_15", "CLEAR_17",
+                                    "CLEAR_18", "CLEAR_19"])
+        wf_all.tsplot(["CLEAR_14", "CLEAR_15", "CLEAR_17",
+                       "CLEAR_18", "CLEAR_19"])
+
+        plt.show()
+
+        """
 
     def timeseries_cumulative_plot(self, wf, name):
         """Makes plots of time series from waterframe parameter.

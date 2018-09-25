@@ -1,8 +1,7 @@
 from utility import Utility
 from data import Data
-from mooda import WaterFrame
-import matplotlib.pyplot as plt
-import csv
+# from mooda import WaterFrame
+# import matplotlib.pyplot as plt
 
 
 def main():
@@ -22,73 +21,10 @@ def main():
         # add waterframe to waterframes list
         waterframes.append(wf)
 
-    def horizontal_sensor_analysis(start_time, stop_time):
-        # Concat all waterframes and rename parameters
-        # wf_all = d.concat_all_wf(waterframes)
-        wf_all = WaterFrame()
-        names = []
-        for wf in waterframes:
-            name = wf.metadata["name"]
-            names.append(name)
-            wf_all.concat(wf)
-            for parameter in wf.parameters():
-                wf_all.rename(parameter, "{}_{}".format(parameter, name))
-
-            # individual analysis for each sensor
-
-            # plot timeseries_cumulative
-            # d.timeseries_cumulative_plot(wf, name)
-            # wf.tsplot(['RED', 'GREEN', 'BLUE', 'CLEAR'], rolling=1)
-            # plt.show()
-
-        # slice time
-        wf_all.slice_time(start_time, stop_time)
-
-        # create .csv with resampling data
-        with open('results_correlation_resample.csv', 'w') as csvfile:
-            writer = csv.writer(csvfile, delimiter=',', lineterminator='\n')
-            header = ['sensor'] + list(range(1, 60))
-            writer.writerow(header)
-
-            for i in range(1, 60):
-                # copy waterframe to avoid resample the same waterframe in
-                # loop
-                wf_all_copy = WaterFrame()
-                wf_all_copy.data = wf_all.data.copy()
-                wf_all_copy.resample("{}S".format(i))
-
-                # fer totes les correlacions entre tots els sensors
-                # buscar per escriure csv en iteració
-
-                row = [wf_all_copy.corr("CLEAR_14", "CLEAR_15")]
-                writer.writerow([row])
-
-                print("14 - 15 ", wf_all_copy.corr("CLEAR_14", "CLEAR_15"))
-                # print("14 - 17", wf_all_copy.corr("CLEAR_14", "CLEAR_17"))
-                # print("14 - 18", wf_all_copy.corr("CLEAR_14", "CLEAR_18"))
-                # print("14 - 19", wf_all_copy.corr("CLEAR_14", "CLEAR_19"))
-                # print("15 - 17", wf_all_copy.corr("CLEAR_15", "CLEAR_17"))
-        """
-        wf_all.resample("10S")
-        print("14 - 15", wf_all.corr("CLEAR_14", "CLEAR_15"))
-        print("14 - 17", wf_all.corr("CLEAR_14", "CLEAR_17"))
-        print("14 - 18", wf_all.corr("CLEAR_14", "CLEAR_18"))
-        print("14 - 19", wf_all.corr("CLEAR_14", "CLEAR_19"))
-        print("15 - 17", wf_all.corr("CLEAR_15", "CLEAR_17"))
-        # print(wf_all.max_diff("CLEAR_14", "CLEAR_19"))
-
-        wf_all.scatter_matrix(keys=["CLEAR_14", "CLEAR_15", "CLEAR_17",
-                                    "CLEAR_18", "CLEAR_19"])
-        wf_all.tsplot(["CLEAR_14", "CLEAR_15", "CLEAR_17",
-                       "CLEAR_18", "CLEAR_19"])
-
-        plt.show()
-
-        """
-
     '''LOCH LEVEN TRAY'''
     # horizontal sensor analysis
-    horizontal_sensor_analysis('20180822121000', '20180822122500')
+    d.horizontal_sensor_analysis(waterframes, '20180822121000',
+                                 '20180822122500')
 
 
 def comparacio_sensors():
