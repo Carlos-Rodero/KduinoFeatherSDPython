@@ -9,6 +9,8 @@ def main():
     path = Utility.user_input_from_terminal()
     # obtain list with DATA.TXT content file's
     contents = Utility.open_files(path)
+    # set analysis cumulative or not
+    cumulative = True
 
     waterframes = []
     for content in contents:
@@ -17,14 +19,23 @@ def main():
         # obtain dataframe and metadata from content
         metadata, raw = d.content_to_dataframe()
         # obtain waterframe. Data could be cumulative (cumulative=True)
-        wf = d.to_wf(metadata, raw, cumulative=False)
+        wf = d.to_wf(metadata, raw, cumulative=cumulative)
         # add waterframe to waterframes list
         waterframes.append(wf)
 
     '''LOCH LEVEN TRAY'''
+    start_time = '20180822120000'
+    stop_time = '20180822122500'
+    # timeseries plot
+    """ d.timeseries_plot(waterframes, start_time, stop_time,
+                      cumulative=cumulative) """
+    # hist plot
+    # treure nomes el clear
+    d.hist_plot(waterframes, start_time, stop_time, cumulative=cumulative)
+
     # horizontal sensor analysis
-    d.horizontal_sensor_analysis(waterframes, '20180822121000',
-                                 '20180822122500')
+    # d.horizontal_sensor_analysis(waterframes, '20180822121000',
+                                 # '20180822122500')
 
 
 def comparacio_sensors():
