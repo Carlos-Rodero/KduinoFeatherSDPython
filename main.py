@@ -10,7 +10,7 @@ def main():
     # obtain list with DATA.TXT content file's
     contents = Utility.open_files(path)
     # set analysis cumulative or not
-    cumulative = True
+    cumulative = False
 
     waterframes = []
     for content in contents:
@@ -23,70 +23,39 @@ def main():
         # add waterframe to waterframes list
         waterframes.append(wf)
 
-    '''LOCH LEVEN TRAY'''
-    start_time = '20180822120000'
-    stop_time = '20180822122500'
-    # timeseries plot
-    """ d.timeseries_plot(waterframes, start_time, stop_time,
-                      cumulative=cumulative) """
-    # hist plot
-    # treure nomes el clear
-    d.hist_plot(waterframes, start_time, stop_time, cumulative=cumulative)
+    def loch_Leven_Tray():
+        start_time = '20180822120000'
+        stop_time = '20180822122500'
 
-    # horizontal sensor analysis
-    # d.horizontal_sensor_analysis(waterframes, '20180822121000',
-                                 # '20180822122500')
+        # timeseries plot
+        """ d.timeseries_plot(waterframes, start_time, stop_time,
+                        cumulative=cumulative) """
+        # hist plot
+        """ d.hist_plot(waterframes, start_time, stop_time,
+                        cumulative=cumulative) """
 
+        # max diff
+        """ d.max_diff_sensors(waterframes, start_time, stop_time,
+                           cumulative=cumulative) """
 
-def comparacio_sensors():
-    path14 = r"C:\Users\caroga\Google Drive\Monocle\github\
-    ProcessarDadesKdUINOFeather\safata_loch_Leven\DATA_14.TXT"
-    path18 = r"C:\Users\caroga\Google Drive\Monocle\github\
-    ProcessarDadesKdUINOFeather\safata_loch_Leven\DATA_18.TXT"
-    path19 = r"C:\Users\caroga\Google Drive\Monocle\github\
-    ProcessarDadesKdUINOFeather\safata_loch_Leven\DATA_19.TXT"
+        # scatter matrix
+        """ d.scatter_matrix(waterframes, start_time, stop_time,
+                         cumulative=cumulative) """
 
-    f = open(path14, "r")
-    content = f.read()
-    d = Data(content)
-    metadata, raw = d.content_to_dataframe()
-    wf14 = d.to_wf(metadata, raw)
+        # correlation resample
+        """ d.correlation_resample(waterframes, start_time, stop_time,
+                               cumulative=cumulative) """
 
-    f = open(path18, "r")
-    content = f.read()
-    d = Data(content)
-    metadata, raw = d.content_to_dataframe()
-    wf18 = d.to_wf(metadata, raw)
+    def loch_Leven_Buoy():
+        start_time = ''
+        stop_time = ''
 
-    f = open(path19, "r")
-    content = f.read()
-    d = Data(content)
-    metadata, raw = d.content_to_dataframe()
-    wf19 = d.to_wf(metadata, raw)
+    """ Analysis Loch Leven Tray """
+    loch_Leven_Tray()
 
-    wf_all = WaterFrame()
-    wf_all.concat(wf14)
-    for parameter in wf14.parameters():
-        wf_all.rename(parameter, "{}_S14".format(parameter))
-
-    wf_all.concat(wf18)
-    for parameter in wf18.parameters():
-        wf_all.rename(parameter, "{}_S18".format(parameter))
-
-    wf_all.concat(wf19)
-    for parameter in wf19.parameters():
-        wf_all.rename(parameter, "{}_S19".format(parameter))
-
-    wf_all.slice_time('20180822120000', '20180822122500')
-
-    print(wf_all.corr("CLEAR_S14", "CLEAR_S19"))
-    print(wf_all.max_diff("CLEAR_S14", "CLEAR_S19"))
-
-    wf_all.scatter_matrix(keys=["CLEAR_S14", "CLEAR_S19", "CLEAR_S18"])
-
-    plt.show()
+    """ Analysis Loch Leven Buoy """
+    loch_Leven_Buoy()
 
 
 if __name__ == "__main__":
     main()
-    # comparacio_sensors()

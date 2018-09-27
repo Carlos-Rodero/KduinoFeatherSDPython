@@ -196,7 +196,7 @@ class Data:
             name = wf.metadata["name"]
             # plot timeseries_cumulative
             if cumulative:
-                wf.slice_time('20180822120000', '20180822122500')
+                wf.slice_time(start_time, stop_time)
                 axes = plt.gca()
                 axes.set_ylim([0, 300000])
                 wf.tsplot(['RED', 'GREEN', 'BLUE', 'CLEAR'], rolling=1,
@@ -204,7 +204,7 @@ class Data:
                 plt.title('Figure {}'.format(name))
                 plt.show()
             else:
-                wf.slice_time('20180822120000', '20180822122500')
+                wf.slice_time(start_time, stop_time)
                 wf.tsplot(['RED', 'GREEN', 'BLUE', 'CLEAR'], rolling=1)
                 plt.title('Figure {}'.format(name))
                 plt.show()
@@ -236,23 +236,22 @@ class Data:
         wf_all.slice_time(start_time, stop_time)
 
         # plot histogram
-        print(wf_all.parameters())
-        wf_all.hist(parameter=wf_all.parameters(), mean_line=True)
+        match_CLEAR = [s for s in wf_all.parameters() if "CLEAR" in s]
+        wf_all.hist(parameter=match_CLEAR, mean_line=True)
         plt.show()
 
-    def horizontal_sensor_analysis(self, waterframes, start_time, stop_time):
-        """Analysis of different sensors in horizontal
+    def max_diff_sensors(self, waterframes, start_time, stop_time, cumulative):
+        """Show maximum difference between parameters in .csv file
         Parameters
         ----------
             waterframes: list
-                List with waterframes from sensors.
+                List of waterFrame objects to manage this data series.
             start_time: str
                 String about start time to slice.
             stop_time: str
                 String about stop time to slice.
-        Returns
-        -------
-            wf: WaterFrame object to manage this data series .
+            cumulative: boolean, optional (cumulative = False)
+                It comes from a cumulative dataframe
         """
         # Concat all waterframes and rename parameters
         wf_all = mooda.WaterFrame()
@@ -264,7 +263,85 @@ class Data:
             for parameter in wf.parameters():
                 wf_all.rename(parameter, "{}_{}".format(parameter, name))
 
-        # create .csv with resampling data
+        # slice time
+        wf_all.slice_time(start_time, stop_time)
+
+        # create .csv with sensor's name, timestamp of maximum difference and
+        # value of this difference
+        with open('results_max_diff.csv', 'w', newline='') as csvfile:
+            filewriter = csv.writer(csvfile, delimiter=',',
+                                    quoting=csv.QUOTE_MINIMAL)
+
+            for combo in combinations(wf_all.parameters(), 2):
+                param_name_1 = " ".join(re.findall("[a-zA-Z]+", combo[0]))
+                param_name_2 = " ".join(re.findall("[a-zA-Z]+", combo[1]))
+                # if name of parameters are the same (i.e. CLEAR == CLEAR)
+                if param_name_1 == param_name_2:
+                    where, value = wf_all.max_diff(combo[0], combo[1])
+                    filewriter.writerow(["{}_{}".format(combo[0],
+                                        combo[1]), where, value])
+
+    def scatter_matrix(self, waterframes, start_time, stop_time,
+                       cumulative):
+        """Makes scatter matrix plot from waterframe parameters
+        Parameters
+        ----------
+            waterframes: list
+                List of waterFrame objects to manage this data series.
+            start_time: str
+                String about start time to slice.
+            stop_time: str
+                String about stop time to slice.
+            cumulative: boolean, optional (cumulative = False)
+                It comes from a cumulative dataframe
+        """
+        # Concat all waterframes and rename parameters
+        wf_all = mooda.WaterFrame()
+        names = []
+        for wf in waterframes:
+            name = wf.metadata["name"]
+            names.append(name)
+            wf_all.concat(wf)
+            for parameter in wf.parameters():
+                wf_all.rename(parameter, "{}_{}".format(parameter, name))
+
+        # slice time
+        wf_all.slice_time(start_time, stop_time)
+
+        # create scatter matrix plot from CLEAR parameter between different
+        # sensors
+        match_CLEAR = [s for s in wf_all.parameters() if "CLEAR" in s]
+        wf_all.scatter_matrix(keys=match_CLEAR)
+        plt.show()
+
+    def correlation_resample(self, waterframes, start_time, stop_time,
+                             cumulative):
+        """Analysis of correlation between sensors doing different resamples
+        Parameters
+        ----------
+            waterframes: list
+                List with waterframes from sensors.
+            start_time: str
+                String about start time to slice.
+            stop_time: str
+                String about stop time to slice.
+            cumulative: boolean, optional (cumulative = False)
+                It comes from a cumulative dataframe
+        """
+        # Concat all waterframes and rename parameters
+        wf_all = mooda.WaterFrame()
+        names = []
+        for wf in waterframes:
+            name = wf.metadata["name"]
+            names.append(name)
+            wf_all.concat(wf)
+            for parameter in wf.parameters():
+                wf_all.rename(parameter, "{}_{}".format(parameter, name))
+
+        # slice time
+        wf_all.slice_time(start_time, stop_time)
+
+        # create dataframe to convert to csv with resampling data
         df = pd.DataFrame()
         label_index = []
         range_list = range(1, 60)
@@ -284,7 +361,7 @@ class Data:
                 param_name_2 = " ".join(re.findall("[a-zA-Z]+", combo[1]))
                 # if name of parameters are the same (i.e. CLEAR == CLEAR)
                 if param_name_1 == param_name_2:
-                    print(wf_all_copy.corr(combo[0], combo[1]), i)
+                    # print(wf_all_copy.corr(combo[0], combo[1]), i)
                     # the first case of resample, to fill the first column
                     # with expected combination of correlations
                     if i == list(first_number_range)[0]:
@@ -304,12 +381,3 @@ class Data:
         df.set_index('sensors')
         df.to_csv('results_correlation_resample.csv', sep=' ',
                   encoding='utf-8')
-
-        # print(wf_all.max_diff("CLEAR_14", "CLEAR_19"))
-
-        """ wf_all.scatter_matrix(keys=["CLEAR_14", "CLEAR_15", "CLEAR_17",
-                                    "CLEAR_18", "CLEAR_19"])
-        wf_all.tsplot(["CLEAR_14", "CLEAR_15", "CLEAR_17",
-                       "CLEAR_18", "CLEAR_19"])
-
-        plt.show() """
