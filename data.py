@@ -381,3 +381,40 @@ class Data:
         df.set_index('sensors')
         df.to_csv('results_correlation_resample.csv', sep=' ',
                   encoding='utf-8')
+
+    def kd_plot(self, waterframes, start_time, stop_time, cumulative):
+        """Makes Kd plot from histogram average data of all sensors in a buoy.
+        Parameters
+        ----------
+            waterframes: list
+                List of waterFrame objects to manage this data series.
+            start_time: str
+                String about start time to slice.
+            stop_time: str
+                String about stop time to slice.
+            cumulative: boolean, optional (cumulative = False)
+                It comes from a cumulative dataframe
+        """
+        # Concat all waterframes and rename parameters
+        wf_all = mooda.WaterFrame()
+        names = []
+        depths = []
+        for wf in waterframes:
+            name = wf.metadata["name"]
+            names.append(name)
+            depth = wf.metadata["depth"]
+            depths.append(depth)
+            wf_all.concat(wf)
+            for parameter in wf.parameters():
+                wf_all.rename(parameter, "{}_{}".format(parameter, name))
+
+        # slice time
+        wf_all.slice_time(start_time, stop_time)
+
+        # get mean from parameters
+        match_CLEAR = [s for s in wf_all.parameters() if "CLEAR" in s]
+        means = wf_all.mean(parameter=match_CLEAR).tolist()
+
+        print(means)
+        print(np.log(means))
+        print(depths)

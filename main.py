@@ -1,7 +1,5 @@
 from utility import Utility
 from data import Data
-# from mooda import WaterFrame
-# import matplotlib.pyplot as plt
 
 
 def main():
@@ -9,6 +7,11 @@ def main():
     path = Utility.user_input_from_terminal()
     # obtain list with DATA.TXT content file's
     contents = Utility.open_files(path)
+
+    if not contents:
+        print("empty data")
+        exit()
+
     # set analysis cumulative or not
     cumulative = False
 
@@ -23,38 +26,42 @@ def main():
         # add waterframe to waterframes list
         waterframes.append(wf)
 
-    def loch_Leven_Tray():
-        start_time = '20180822120000'
-        stop_time = '20180822122500'
-
+    def analysis_tray(start_time, stop_time):
         # timeseries plot
-        """ d.timeseries_plot(waterframes, start_time, stop_time,
-                        cumulative=cumulative) """
+        d.timeseries_plot(waterframes, start_time, stop_time,
+                          cumulative=cumulative)
         # hist plot
-        """ d.hist_plot(waterframes, start_time, stop_time,
-                        cumulative=cumulative) """
+        d.hist_plot(waterframes, start_time, stop_time,
+                    cumulative=cumulative)
 
         # max diff
-        """ d.max_diff_sensors(waterframes, start_time, stop_time,
-                           cumulative=cumulative) """
+        d.max_diff_sensors(waterframes, start_time, stop_time,
+                           cumulative=cumulative)
 
         # scatter matrix
-        """ d.scatter_matrix(waterframes, start_time, stop_time,
-                         cumulative=cumulative) """
+        d.scatter_matrix(waterframes, start_time, stop_time,
+                         cumulative=cumulative)
 
         # correlation resample
-        """ d.correlation_resample(waterframes, start_time, stop_time,
-                               cumulative=cumulative) """
+        d.correlation_resample(waterframes, start_time, stop_time,
+                               cumulative=cumulative)
 
-    def loch_Leven_Buoy():
-        start_time = ''
-        stop_time = ''
+    def analysis_buoy(start_time, stop_time):
+        # timeseries plot
+        """ d.timeseries_plot(waterframes, start_time, stop_time,
+                          cumulative=cumulative) """
+        # hist plot
+        d.kd_plot(waterframes, start_time, stop_time,
+                  cumulative=cumulative)
 
     """ Analysis Loch Leven Tray """
-    loch_Leven_Tray()
+    # analysis_tray('20180822120000', '20180822122500')
+
+    """ Analysis Stirling Tray """
+    # analysis_tray('20180821133200', '20180821134500')
 
     """ Analysis Loch Leven Buoy """
-    loch_Leven_Buoy()
+    analysis_buoy('20180822115000', '20180822150000')
 
 
 if __name__ == "__main__":
