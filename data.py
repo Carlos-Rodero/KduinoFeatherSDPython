@@ -179,7 +179,8 @@ class Data:
 
         return wf
 
-    def timeseries_plot(self, waterframes, start_time, stop_time, cumulative):
+    def timeseries_plot(self, waterframes, start_time, stop_time, path,
+                        cumulative):
         """Makes plots of time series from waterframe parameter.
         Parameters
         ----------
@@ -189,27 +190,96 @@ class Data:
                 String about start time to slice.
             stop_time: str
                 String about stop time to slice.
+            path: str
+                String about path where are DATA.TXT files
             cumulative: boolean, optional (cumulative = False)
                 It comes from a cumulative dataframe
         """
+        # create new path to save plots
+        if cumulative:
+            newpath = os.path.join(path, 'cumulative', 'timeseries')
+        else:
+            newpath = os.path.join(path, 'non_cumulative', 'timeseries')
+        if not os.path.exists(newpath):
+            os.makedirs(newpath)
+
+        # calculate maximum value for y axes
+        max = 0
+        for wf in waterframes:
+            wf.slice_time(start_time, stop_time)
+            wf_max = wf.max("CLEAR")
+            if wf_max[1] > max:
+                max = wf_max[1]
+
+        # create time series from waterframes
         for wf in waterframes:
             name = wf.metadata["name"]
+            file_name = os.path.join(newpath, name)
             # plot timeseries_cumulative
             if cumulative:
                 wf.slice_time(start_time, stop_time)
                 axes = plt.gca()
-                axes.set_ylim([0, 300000])
+                axes.set_ylim([0, max])
                 wf.tsplot(['RED', 'GREEN', 'BLUE', 'CLEAR'], rolling=1,
                           ax=axes)
                 plt.title('Figure {}'.format(name))
-                plt.show()
+                plt.savefig("{}".format(file_name))
+                # plt.show()
+                plt.clf()
             else:
                 wf.slice_time(start_time, stop_time)
-                wf.tsplot(['RED', 'GREEN', 'BLUE', 'CLEAR'], rolling=1)
+                axes = plt.gca()
+                axes.set_ylim([0, max])
+                wf.tsplot(['RED', 'GREEN', 'BLUE', 'CLEAR'], rolling=1,
+                          ax=axes)
                 plt.title('Figure {}'.format(name))
-                plt.show()
+                plt.savefig("{}".format(file_name))
+                # plt.show()
+                plt.clf()
 
-    def hist_plot(self, waterframes, start_time, stop_time, cumulative):
+    def timeseries_buoy_plot(self, waterframes, start_time, stop_time, path,
+                             cumulative):
+        """Makes plots of time series buoy from waterframe parameter.
+        Parameters
+        ----------
+            waterframes: list
+                List of waterFrame objects to manage this data series.
+            start_time: str
+                String about start time to slice.
+            stop_time: str
+                String about stop time to slice.
+            path: str
+                String about path where are DATA.TXT files
+            cumulative: boolean, optional (cumulative = False)
+                It comes from a cumulative dataframe
+        """
+        # create new path to save plots
+        if cumulative:
+            newpath = os.path.join(path, 'cumulative', 'timeseries')
+        else:
+            newpath = os.path.join(path, 'non_cumulative', 'timeseries')
+        if not os.path.exists(newpath):
+            os.makedirs(newpath)
+
+        # create time series from waterframes
+        for wf in waterframes:
+            name = wf.metadata["name"]
+            file_name = os.path.join(newpath, name)
+            # plot timeseries_cumulative
+            wf.slice_time(start_time, stop_time)
+            axes = plt.gca()
+            # set max value for y axes
+            wf_max = wf.max("CLEAR")
+            max = wf_max[1]
+            axes.set_ylim([0, max])
+
+            wf.tsplot(['RED', 'GREEN', 'BLUE', 'CLEAR'], rolling=1, ax=axes)
+            plt.title('Figure {}'.format(name))
+            plt.savefig("{}".format(file_name))
+            # plt.show()
+            plt.clf()
+
+    def hist_plot(self, waterframes, start_time, stop_time, path, cumulative):
         """Makes plots of histogram from waterframe parameter.
         Parameters
         ----------
@@ -219,9 +289,19 @@ class Data:
                 String about start time to slice.
             stop_time: str
                 String about stop time to slice.
+            path: str
+                String about path where are DATA.TXT files
             cumulative: boolean, optional (cumulative = False)
                 It comes from a cumulative dataframe
         """
+        # create new path to save plots
+        if cumulative:
+            newpath = os.path.join(path, 'cumulative', 'histogram')
+        else:
+            newpath = os.path.join(path, 'non_cumulative', 'histogram')
+        if not os.path.exists(newpath):
+            os.makedirs(newpath)
+
         # Concat all waterframes and rename parameters
         wf_all = mooda.WaterFrame()
         names = []
@@ -238,9 +318,14 @@ class Data:
         # plot histogram
         match_CLEAR = [s for s in wf_all.parameters() if "CLEAR" in s]
         wf_all.hist(parameter=match_CLEAR, mean_line=True)
-        plt.show()
+        plt.tight_layout()
+        file_name = os.path.join(newpath, "all_data")
+        plt.savefig("{}".format(file_name))
+        # plt.show()
+        plt.clf()
 
-    def max_diff_sensors(self, waterframes, start_time, stop_time, cumulative):
+    def max_diff_sensors(self, waterframes, start_time, stop_time, path,
+                         cumulative):
         """Show maximum difference between parameters in .csv file
         Parameters
         ----------
@@ -250,9 +335,19 @@ class Data:
                 String about start time to slice.
             stop_time: str
                 String about stop time to slice.
+            path: str
+                String about path where are DATA.TXT files
             cumulative: boolean, optional (cumulative = False)
                 It comes from a cumulative dataframe
         """
+        # create new path to save plots
+        if cumulative:
+            newpath = os.path.join(path, 'cumulative', 'max_diff')
+        else:
+            newpath = os.path.join(path, 'non_cumulative', 'max_diff')
+        if not os.path.exists(newpath):
+            os.makedirs(newpath)
+
         # Concat all waterframes and rename parameters
         wf_all = mooda.WaterFrame()
         names = []
@@ -268,9 +363,11 @@ class Data:
 
         # create .csv with sensor's name, timestamp of maximum difference and
         # value of this difference
-        with open('results_max_diff.csv', 'w', newline='') as csvfile:
+        file_name = os.path.join(newpath, "all_data.csv")
+        with open(file_name, 'w', newline='') as csvfile:
             filewriter = csv.writer(csvfile, delimiter=',',
                                     quoting=csv.QUOTE_MINIMAL)
+            filewriter.writerow(["sensors", "timestamp", "max_diff"])
 
             for combo in combinations(wf_all.parameters(), 2):
                 param_name_1 = " ".join(re.findall("[a-zA-Z]+", combo[0]))
@@ -281,7 +378,15 @@ class Data:
                     filewriter.writerow(["{}_{}".format(combo[0],
                                         combo[1]), where, value])
 
-    def scatter_matrix(self, waterframes, start_time, stop_time,
+        df = pd.read_csv(file_name)
+        df.set_index("sensors")
+        ax = df.plot.bar(x='sensors', y='max_diff')
+        plt.tight_layout()
+        file_name = os.path.join(newpath, "all_data")
+        plt.savefig("{}".format(file_name))
+        # plt.show()
+
+    def scatter_matrix(self, waterframes, start_time, stop_time, path,
                        cumulative):
         """Makes scatter matrix plot from waterframe parameters
         Parameters
@@ -292,9 +397,19 @@ class Data:
                 String about start time to slice.
             stop_time: str
                 String about stop time to slice.
+            path: str
+                String about path where are DATA.TXT files
             cumulative: boolean, optional (cumulative = False)
                 It comes from a cumulative dataframe
         """
+        # create new path to save plots
+        if cumulative:
+            newpath = os.path.join(path, 'cumulative', 'scatter_matrix')
+        else:
+            newpath = os.path.join(path, 'non_cumulative', 'scatter_matrix')
+        if not os.path.exists(newpath):
+            os.makedirs(newpath)
+
         # Concat all waterframes and rename parameters
         wf_all = mooda.WaterFrame()
         names = []
@@ -312,9 +427,12 @@ class Data:
         # sensors
         match_CLEAR = [s for s in wf_all.parameters() if "CLEAR" in s]
         wf_all.scatter_matrix(keys=match_CLEAR)
-        plt.show()
+        plt.tight_layout()
+        file_name = os.path.join(newpath, "all_data")
+        plt.savefig("{}".format(file_name))
+        # plt.show()
 
-    def correlation_resample(self, waterframes, start_time, stop_time,
+    def correlation_resample(self, waterframes, start_time, stop_time, path,
                              cumulative):
         """Analysis of correlation between sensors doing different resamples
         Parameters
@@ -325,9 +443,20 @@ class Data:
                 String about start time to slice.
             stop_time: str
                 String about stop time to slice.
+            path: str
+                String about path where are DATA.TXT files
             cumulative: boolean, optional (cumulative = False)
                 It comes from a cumulative dataframe
         """
+        # create new path to save plots
+        if cumulative:
+            newpath = os.path.join(path, 'cumulative', 'correlation_resample')
+        else:
+            newpath = os.path.join(path, 'non_cumulative',
+                                   'correlation_resample')
+        if not os.path.exists(newpath):
+            os.makedirs(newpath)
+
         # Concat all waterframes and rename parameters
         wf_all = mooda.WaterFrame()
         names = []
@@ -342,6 +471,7 @@ class Data:
         wf_all.slice_time(start_time, stop_time)
 
         # create dataframe to convert to csv with resampling data
+        file_name = os.path.join(newpath, "all_data.csv")
         df = pd.DataFrame()
         label_index = []
         range_list = range(1, 60)
@@ -379,8 +509,15 @@ class Data:
 
         df.insert(0, 'sensors', label_index)
         df.set_index('sensors')
-        df.to_csv('results_correlation_resample.csv', sep=' ',
+        df.to_csv(file_name, sep=' ',
                   encoding='utf-8')
+
+        df = pd.read_csv(file_name)
+        print(df)
+        ax = df.plot()
+        file_name = os.path.join(newpath, "all_data")
+        plt.savefig("{}".format(file_name))
+        plt.show() """
 
     def kd_plot(self, waterframes, start_time, stop_time, cumulative):
         """Makes Kd plot from histogram average data of all sensors in a buoy.
@@ -406,15 +543,22 @@ class Data:
             depths.append(depth)
             wf_all.concat(wf)
             for parameter in wf.parameters():
-                wf_all.rename(parameter, "{}_{}".format(parameter, name))
+                wf_all.rename(parameter, "{}_{}".format(parameter, depth))
 
         # slice time
         wf_all.slice_time(start_time, stop_time)
 
-        # get mean from parameters
+        """ # get mean from CLEAR parameter
         match_CLEAR = [s for s in wf_all.parameters() if "CLEAR" in s]
-        means = wf_all.mean(parameter=match_CLEAR).tolist()
+        match_RED = [s for s in wf_all.parameters() if "RED" in s]
+        match_GREEN = [s for s in wf_all.parameters() if "GREEN" in s]
+        match_BLUE = [s for s in wf_all.parameters() if "BLUE" in s]
+        clear_means = wf_all.mean(parameter=match_CLEAR).tolist()
+        red_means = wf_all.mean(parameter=match_RED).tolist()
+        green_means = wf_all.mean(parameter=match_GREEN).tolist()
+        blue_means = wf_all.mean(parameter=match_BLUE).tolist()
 
-        print(means)
-        print(np.log(means))
-        print(depths)
+        print(clear_means)
+        print(np.log(clear_means)) """
+
+        print(wf_all.parameters().sort())

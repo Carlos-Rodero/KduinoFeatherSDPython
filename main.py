@@ -28,40 +28,40 @@ def main():
 
     def analysis_tray(start_time, stop_time):
         # timeseries plot
-        d.timeseries_plot(waterframes, start_time, stop_time,
-                          cumulative=cumulative)
+        """ d.timeseries_plot(waterframes, start_time, stop_time, path,
+                          cumulative=cumulative) """
         # hist plot
-        d.hist_plot(waterframes, start_time, stop_time,
-                    cumulative=cumulative)
+        """ d.hist_plot(waterframes, start_time, stop_time, path,
+                    cumulative=cumulative) """
 
         # max diff
-        d.max_diff_sensors(waterframes, start_time, stop_time,
-                           cumulative=cumulative)
+        """ d.max_diff_sensors(waterframes, start_time, stop_time, path,
+                           cumulative=cumulative) """
 
         # scatter matrix
-        d.scatter_matrix(waterframes, start_time, stop_time,
-                         cumulative=cumulative)
+        """ d.scatter_matrix(waterframes, start_time, stop_time, path,
+                         cumulative=cumulative) """
 
         # correlation resample
-        d.correlation_resample(waterframes, start_time, stop_time,
+        d.correlation_resample(waterframes, start_time, stop_time, path,
                                cumulative=cumulative)
 
     def analysis_buoy(start_time, stop_time):
         # timeseries plot
-        """ d.timeseries_plot(waterframes, start_time, stop_time,
-                          cumulative=cumulative) """
-        # hist plot
-        d.kd_plot(waterframes, start_time, stop_time,
-                  cumulative=cumulative)
-
-    """ Analysis Loch Leven Tray """
-    # analysis_tray('20180822120000', '20180822122500')
+        """ d.timeseries_buoy_plot(waterframes, start_time, stop_time, path,
+                               cumulative=cumulative) """
+        # kd plot
+        """ d.kd_plot(waterframes, start_time, stop_time,
+                  cumulative=cumulative) """
 
     """ Analysis Stirling Tray """
-    # analysis_tray('20180821133200', '20180821134500')
+    analysis_tray('20180821133200', '20180821134500')
+
+    """ Analysis Loch Leven Tray """
+    # analysis_tray('20180822121000', '20180822122500')
 
     """ Analysis Loch Leven Buoy """
-    analysis_buoy('20180822115000', '20180822150000')
+    # analysis_buoy('20180822115000', '20180822150000')
 
 
 if __name__ == "__main__":

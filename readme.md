@@ -7,6 +7,27 @@ Functions:
 
 timeseries: plot
 hist: plot
-max diff: csv
+max diff: plot, csv
 scatter matrix: plot
- correlation resample: csv
+correlation resample: csv
+
+Results:
+
+    safata_Stirling/cumulative:
+        - timeseries
+
+    safata_Stirling/non_cumulative:
+        - timeseries
+        - histogram
+        - max_diff
+        - scatter_matrix
+
+    safata_loch_Leven/cumulative:
+        - timeseries
+    
+    safata_loch_Leven/non_cumulative:
+        - timeseries
+        - histogram
+        - max_diff
+        - scatter_matrix
+
