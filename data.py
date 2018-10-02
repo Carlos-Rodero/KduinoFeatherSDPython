@@ -119,7 +119,6 @@ class Data:
         wf.data['GREEN'] = raw[1]
         wf.data['BLUE'] = raw[2]
         wf.data['CLEAR'] = raw[3]
-
         red = {'units': "counts"}
         wf.meaning['RED'] = red
 
@@ -470,10 +469,14 @@ class Data:
         # slice time
         wf_all.slice_time(start_time, stop_time)
 
-        # create dataframe to convert to csv with resampling data
+        # create waterframe to convert to csv file with resampling data
+        wf_resample = mooda.WaterFrame()
         file_name = os.path.join(newpath, "all_data.csv")
-        df = pd.DataFrame()
+
+        # list to save parameters that we need
         label_index = []
+
+        # variables for iterations
         range_list = range(1, 60)
         first_number_range = range_list[:1]
 
@@ -483,7 +486,6 @@ class Data:
             wf_all_copy = mooda.WaterFrame()
             wf_all_copy.data = wf_all.data.copy()
             wf_all_copy.resample("{}S".format(i))
-            comb_num = 0
 
             # combination of parameters for pairs
             for combo in combinations(wf_all_copy.parameters(), 2):
@@ -495,29 +497,44 @@ class Data:
                     # the first case of resample, to fill the first column
                     # with expected combination of correlations
                     if i == list(first_number_range)[0]:
+                        # save parameters to list
                         label_index.append("{}_{}".format(combo[0],
                                                           combo[1]))
 
-                        df = df.append({i: wf_all_copy.corr(combo[0],
-                                                            combo[1])},
-                                       ignore_index=True)
-                    # next columns of dataframe with next resamples
+                        label = "{}_{}".format(combo[0], combo[1])
+                        label_qc = "{}_{}_{}".format(combo[0], combo[1], "QC")
+
+                        d = {label: [wf_all_copy.corr(combo[0], combo[1])]}
+                        df = pd.DataFrame(data=d)
+
+                        # initialize index waterframe
+                        wf_resample.data['rs'] = i
+                        wf_resample.data[label] = df
+                        wf_resample.data[label_qc] = 0
+
+                        units = {'units': "corr"}
+                        wf_resample.meaning[label] = units
+
+                    # next data of waterframe
                     else:
-                        df.loc[[comb_num], i] = wf_all_copy.corr(combo[0],
-                                                                 combo[1])
-                        comb_num += 1
+                        label = "{}_{}".format(combo[0], combo[1])
+                        label_qc = "{}_{}_{}".format(combo[0], combo[1], "QC")
+                        wf_resample.data.at[i, "rs"] = i
+                        wf_resample.data.at[i, label_qc] = 0
+                        wf_resample.data.at[i, label] = wf_all_copy.corr(
+                            combo[0], combo[1])
 
-        df.insert(0, 'sensors', label_index)
-        df.set_index('sensors')
-        df.to_csv(file_name, sep=' ',
-                  encoding='utf-8')
+        list_CLEAR = [s for s in wf_resample.parameters() if "CLEAR" in s]
 
-        df = pd.read_csv(file_name)
-        print(df)
-        ax = df.plot()
+        # save data to csv file
+        wf_resample.data[label_index].to_csv(file_name)
+
+        # save line plot
         file_name = os.path.join(newpath, "all_data")
-        plt.savefig("{}".format(file_name))
-        plt.show() """
+        wf_resample.data.plot(x='rs', y=list_CLEAR)
+        plt.legend(loc='center left', bbox_to_anchor=(1, 0))
+        plt.savefig("{}".format(file_name), bbox_inches='tight')
+        # plt.show()
 
     def kd_plot(self, waterframes, start_time, stop_time, cumulative):
         """Makes Kd plot from histogram average data of all sensors in a buoy.

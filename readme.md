@@ -21,6 +21,7 @@ Results:
         - histogram
         - max_diff
         - scatter_matrix
+        - correlation_resample
 
     safata_loch_Leven/cumulative:
         - timeseries
@@ -30,4 +31,12 @@ Results:
         - histogram
         - max_diff
         - scatter_matrix
+        - correlation_resample
+
+    boia_loch_leven/cumulative:
+        - timeseries
+
+    boia_loch_leven/non_cumulative:
+        - timeseries
+        - kd
 

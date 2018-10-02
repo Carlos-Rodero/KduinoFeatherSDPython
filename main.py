@@ -43,8 +43,8 @@ def main():
                          cumulative=cumulative) """
 
         # correlation resample
-        d.correlation_resample(waterframes, start_time, stop_time, path,
-                               cumulative=cumulative)
+        """ d.correlation_resample(waterframes, start_time, stop_time, path,
+                               cumulative=cumulative) """
 
     def analysis_buoy(start_time, stop_time):
         # timeseries plot
@@ -55,7 +55,7 @@ def main():
                   cumulative=cumulative) """
 
     """ Analysis Stirling Tray """
-    analysis_tray('20180821133200', '20180821134500')
+    # analysis_tray('20180821133200', '20180821134500')
 
     """ Analysis Loch Leven Tray """
     # analysis_tray('20180822121000', '20180822122500')
