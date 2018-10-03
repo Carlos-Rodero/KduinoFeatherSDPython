@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 import csv
 from itertools import combinations
+from scipy import stats, interpolate
 
 
 class Data:
@@ -536,7 +537,7 @@ class Data:
         plt.savefig("{}".format(file_name), bbox_inches='tight')
         # plt.show()
 
-    def kd_plot(self, waterframes, start_time, stop_time, cumulative):
+    def kd_plot(self, waterframes, start_time, stop_time, path, cumulative):
         """Makes Kd plot from histogram average data of all sensors in a buoy.
         Parameters
         ----------
@@ -565,6 +566,11 @@ class Data:
         # slice time
         wf_all.slice_time(start_time, stop_time)
 
+        # resample to minute
+        wf_all_copy = mooda.WaterFrame()
+        wf_all_copy.data = wf_all.data.copy()
+        wf_all_copy.resample('T')
+
         """ # get mean from CLEAR parameter
         match_CLEAR = [s for s in wf_all.parameters() if "CLEAR" in s]
         match_RED = [s for s in wf_all.parameters() if "RED" in s]
@@ -578,4 +584,34 @@ class Data:
         print(clear_means)
         print(np.log(clear_means)) """
 
-        print(wf_all.parameters().sort())
+        # calculate log from data and create columns Kd
+        depths = list(map(float, depths))
+        wf_all_copy.data = np.log(wf_all_copy.data)
+        wf_all_copy.data['Kd_CLEAR'] = np.nan
+        wf_all_copy.data['Kd_RED'] = np.nan
+        wf_all_copy.data['Kd_GREEN'] = np.nan
+        wf_all_copy.data['Kd_BLUE'] = np.nan
+
+        match_CLEAR = [s for s in wf_all_copy.parameters() if "CLEAR" in s]
+        match_RED = [s for s in wf_all_copy.parameters() if "RED" in s]
+        match_GREEN = [s for s in wf_all_copy.parameters() if "GREEN" in s]
+        match_BLUE = [s for s in wf_all_copy.parameters() if "BLUE" in s]
+
+        # print(wf_all_copy.data[match_CLEAR])
+
+        # iterate over waterframe to calculate Kds
+        for index, row in wf_all_copy.data.iterrows():
+
+            row_clear = wf_all_copy.data.loc[index, match_CLEAR].tolist()
+
+            xm = np.ma.masked_array(row_clear, mask=np.isnan(row_clear)).
+            compressed()
+            ym = np.ma.masked_array(depths, mask=np.isnan(row_clear)).
+            compressed()
+
+            slope, intercept, r_value, p_value, std_err = stats.linregress(xm,
+                                                                           ym)
+            print(slope)
+            # wf_all_copy.data.at[index, 'Kd_CLEAR'] = slope * (-1)
+
+        print(wf_all_copy.data)

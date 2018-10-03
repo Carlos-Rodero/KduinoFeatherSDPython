@@ -51,8 +51,8 @@ def main():
         """ d.timeseries_buoy_plot(waterframes, start_time, stop_time, path,
                                cumulative=cumulative) """
         # kd plot
-        """ d.kd_plot(waterframes, start_time, stop_time,
-                  cumulative=cumulative) """
+        d.kd_plot(waterframes, start_time, stop_time, path,
+                  cumulative=cumulative)
 
     """ Analysis Stirling Tray """
     # analysis_tray('20180821133200', '20180821134500')
@@ -61,7 +61,7 @@ def main():
     # analysis_tray('20180822121000', '20180822122500')
 
     """ Analysis Loch Leven Buoy """
-    # analysis_buoy('20180822115000', '20180822150000')
+    analysis_buoy('20180822115000', '20180822150000')
 
 
 if __name__ == "__main__":
