@@ -8,6 +8,7 @@ import pandas as pd
 import csv
 from itertools import combinations
 from scipy import stats, interpolate
+import math
 
 
 class Data:
@@ -550,6 +551,15 @@ class Data:
             cumulative: boolean, optional (cumulative = False)
                 It comes from a cumulative dataframe
         """
+        # create new path to save plots
+        if cumulative:
+            newpath = os.path.join(path, 'cumulative', 'kd')
+        else:
+            newpath = os.path.join(path, 'non_cumulative',
+                                   'kd')
+        if not os.path.exists(newpath):
+            os.makedirs(newpath)
+
         # Concat all waterframes and rename parameters
         wf_all = mooda.WaterFrame()
         names = []
@@ -571,47 +581,130 @@ class Data:
         wf_all_copy.data = wf_all.data.copy()
         wf_all_copy.resample('T')
 
-        """ # get mean from CLEAR parameter
-        match_CLEAR = [s for s in wf_all.parameters() if "CLEAR" in s]
-        match_RED = [s for s in wf_all.parameters() if "RED" in s]
-        match_GREEN = [s for s in wf_all.parameters() if "GREEN" in s]
-        match_BLUE = [s for s in wf_all.parameters() if "BLUE" in s]
-        clear_means = wf_all.mean(parameter=match_CLEAR).tolist()
-        red_means = wf_all.mean(parameter=match_RED).tolist()
-        green_means = wf_all.mean(parameter=match_GREEN).tolist()
-        blue_means = wf_all.mean(parameter=match_BLUE).tolist()
-
-        print(clear_means)
-        print(np.log(clear_means)) """
-
-        # calculate log from data and create columns Kd
+        # convert depths list elements to float
         depths = list(map(float, depths))
+
+        # calculate ln from data and create columns Kd
         wf_all_copy.data = np.log(wf_all_copy.data)
         wf_all_copy.data['Kd_CLEAR'] = np.nan
         wf_all_copy.data['Kd_RED'] = np.nan
         wf_all_copy.data['Kd_GREEN'] = np.nan
         wf_all_copy.data['Kd_BLUE'] = np.nan
 
+        # create lists with parameters name
         match_CLEAR = [s for s in wf_all_copy.parameters() if "CLEAR" in s]
         match_RED = [s for s in wf_all_copy.parameters() if "RED" in s]
         match_GREEN = [s for s in wf_all_copy.parameters() if "GREEN" in s]
         match_BLUE = [s for s in wf_all_copy.parameters() if "BLUE" in s]
 
-        # print(wf_all_copy.data[match_CLEAR])
-
         # iterate over waterframe to calculate Kds
         for index, row in wf_all_copy.data.iterrows():
 
+            # CLEAR
             row_clear = wf_all_copy.data.loc[index, match_CLEAR].tolist()
+            # get indices where element is Nan or Infinite
+            indices = [i for i, s in enumerate(row_clear) if np.isnan(s) or
+                       np.isinf(s)]
 
-            xm = np.ma.masked_array(row_clear, mask=np.isnan(row_clear)).
-            compressed()
-            ym = np.ma.masked_array(depths, mask=np.isnan(row_clear)).
-            compressed()
+            # delete null elements from lists
+            row_clear = np.delete(row_clear, indices).tolist()
+            depths_row_clear = np.delete(depths, indices).tolist()
 
-            slope, intercept, r_value, p_value, std_err = stats.linregress(xm,
-                                                                           ym)
-            print(slope)
-            # wf_all_copy.data.at[index, 'Kd_CLEAR'] = slope * (-1)
+            # calculate Kd from linear regression
+            slope, intercept, r_value, p_value, std_err = stats.linregress(
+                depths_row_clear, row_clear)
+            wf_all_copy.data.at[index, 'Kd_CLEAR'] = slope * (-1)
+            print(r_value)
 
-        print(wf_all_copy.data)
+            # RED
+            row_red = wf_all_copy.data.loc[index, match_RED].tolist()
+            # get indices where element is Nan or Infinite
+            indices = [i for i, s in enumerate(row_red) if np.isnan(s) or
+                       np.isinf(s)]
+
+            # delete null elements from lists
+            row_red = np.delete(row_red, indices).tolist()
+            depths_row_red = np.delete(depths, indices).tolist()
+
+            # calculate Kd from linear regression
+            slope, intercept, r_value, p_value, std_err = stats.linregress(
+                depths_row_red, row_red)
+            wf_all_copy.data.at[index, 'Kd_RED'] = slope * (-1)
+
+            # GREEN
+            row_green = wf_all_copy.data.loc[index, match_GREEN].tolist()
+            # get indices where element is Nan or Infinite
+            indices = [i for i, s in enumerate(row_green) if np.isnan(s) or
+                       np.isinf(s)]
+
+            # delete null elements from lists
+            row_green = np.delete(row_green, indices).tolist()
+            depths_row_green = np.delete(depths, indices).tolist()
+
+            # calculate Kd from linear regression
+            slope, intercept, r_value, p_value, std_err = stats.linregress(
+                depths_row_green, row_green)
+            wf_all_copy.data.at[index, 'Kd_GREEN'] = slope * (-1)
+
+            # BLUE
+            row_blue = wf_all_copy.data.loc[index, match_BLUE].tolist()
+            # get indices where element is Nan or Infinite
+            indices = [i for i, s in enumerate(row_blue) if np.isnan(s) or
+                       np.isinf(s)]
+
+            # delete null elements from lists
+            row_blue = np.delete(row_blue, indices).tolist()
+            depths_row_blue = np.delete(depths, indices).tolist()
+
+            # calculate Kd from linear regression
+            slope, intercept, r_value, p_value, std_err = stats.linregress(
+                depths_row_blue, row_blue)
+            wf_all_copy.data.at[index, 'Kd_BLUE'] = slope * (-1)
+
+        # print(wf_all_copy.data)
+        # save Kd plots
+        file_name_Kd_CLEAR = os.path.join(newpath, "Kd_CLEAR")
+        file_name_Kd_RED = os.path.join(newpath, "Kd_RED")
+        file_name_Kd_GREEN = os.path.join(newpath, "Kd_GREEN")
+        file_name_Kd_BLUE = os.path.join(newpath, "Kd_BLUE")
+        file_name_Kd_ALL = os.path.join(newpath, "Kd_ALL")
+
+        # CLEAR
+        wf_all_copy.tsplot(['Kd_CLEAR'],
+                           rolling=1)
+        plt.title('Kd_CLEAR')
+        plt.savefig("{}".format(file_name_Kd_CLEAR))
+        # plt.show()
+        plt.clf()
+
+        # RED
+        wf_all_copy.tsplot(['Kd_RED'],
+                           rolling=1)
+        plt.title('Kd_RED')
+        plt.savefig("{}".format(file_name_Kd_RED))
+        # plt.show()
+        plt.clf()
+
+        # GREEN
+        wf_all_copy.tsplot(['Kd_GREEN'],
+                           rolling=1)
+        plt.title('Kd_GREEN')
+        plt.savefig("{}".format(file_name_Kd_GREEN))
+        # plt.show()
+        plt.clf()
+
+        # BLUE
+        wf_all_copy.tsplot(['Kd_BLUE'],
+                           rolling=1)
+        plt.title('Kd_BLUE')
+        plt.savefig("{}".format(file_name_Kd_BLUE))
+        # plt.show()
+        plt.clf()
+
+        # ALL
+        wf_all_copy.tsplot(['Kd_CLEAR', 'Kd_RED', 'Kd_GREEN', 'Kd_BLUE'],
+                           rolling=1)
+        plt.title('Kd_ALL')
+        plt.savefig("{}".format(file_name_Kd_ALL))
+        # plt.show()
+        plt.clf()

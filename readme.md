@@ -9,7 +9,9 @@ timeseries: plot
 hist: plot
 max diff: plot, csv
 scatter matrix: plot
-correlation resample: csv
+correlation resample: plot, csv
+kd: plot
+
 
 Results:
 
