@@ -614,7 +614,7 @@ class Data:
             slope, intercept, r_value, p_value, std_err = stats.linregress(
                 depths_row_clear, row_clear)
             wf_all_copy.data.at[index, 'Kd_CLEAR'] = slope * (-1)
-            print(r_value)
+            # print(r_value)
 
             # RED
             row_red = wf_all_copy.data.loc[index, match_RED].tolist()
@@ -668,6 +668,7 @@ class Data:
         file_name_Kd_GREEN = os.path.join(newpath, "Kd_GREEN")
         file_name_Kd_BLUE = os.path.join(newpath, "Kd_BLUE")
         file_name_Kd_ALL = os.path.join(newpath, "Kd_ALL")
+        file_name_Kd_HIST = os.path.join(newpath, "Kd_HIST")
 
         # CLEAR
         wf_all_copy.tsplot(['Kd_CLEAR'],
@@ -706,5 +707,13 @@ class Data:
                            rolling=1)
         plt.title('Kd_ALL')
         plt.savefig("{}".format(file_name_Kd_ALL))
+        # plt.show()
+        plt.clf()
+
+        # HIST
+        wf_all_copy.hist(parameter=['Kd_CLEAR', 'Kd_RED', 'Kd_GREEN',
+                         'Kd_BLUE'], mean_line=True)
+        plt.title('Kd_HIST')
+        plt.savefig("{}".format(file_name_Kd_HIST))
         # plt.show()
         plt.clf()
