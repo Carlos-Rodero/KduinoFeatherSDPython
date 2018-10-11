@@ -25,7 +25,7 @@ Results:
         - scatter_matrix
         - correlation_resample
 
-    safata_loch_Leven/cumulative:
+    safata_Stirling/cumulative:
         - timeseries
     
     safata_loch_Leven/non_cumulative:

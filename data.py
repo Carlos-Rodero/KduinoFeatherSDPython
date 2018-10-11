@@ -2,13 +2,14 @@ import os
 import re
 from io import StringIO
 import matplotlib.pyplot as plt
-import mooda_code.mooda as mooda
+import mooda as mooda
 import numpy as np
 import pandas as pd
 import csv
 from itertools import combinations
 from scipy import stats, interpolate
 import math
+from pprint import pprint
 
 
 class Data:
@@ -180,8 +181,8 @@ class Data:
 
         return wf
 
-    def timeseries_plot(self, waterframes, start_time, stop_time, path,
-                        cumulative):
+    def timeseries_individual_plot(self, waterframes, start_time, stop_time,
+                                   path, cumulative):
         """Makes plots of time series from waterframe parameter.
         Parameters
         ----------
@@ -220,23 +221,76 @@ class Data:
             if cumulative:
                 wf.slice_time(start_time, stop_time)
                 axes = plt.gca()
-                axes.set_ylim([0, max])
+                # axes.set_ylim([0, max])
                 wf.tsplot(['RED', 'GREEN', 'BLUE', 'CLEAR'], rolling=1,
                           ax=axes)
-                plt.title('Figure {}'.format(name))
+                plt.title('Time series cumulative of module {}'.
+                          format(name))
                 plt.savefig("{}".format(file_name))
                 # plt.show()
                 plt.clf()
             else:
                 wf.slice_time(start_time, stop_time)
                 axes = plt.gca()
-                axes.set_ylim([0, max])
+                # axes.set_ylim([0, max])
                 wf.tsplot(['RED', 'GREEN', 'BLUE', 'CLEAR'], rolling=1,
                           ax=axes)
-                plt.title('Figure {}'.format(name))
+                plt.title('Time series non cumulative of module {}'.
+                          format(name))
                 plt.savefig("{}".format(file_name))
                 # plt.show()
                 plt.clf()
+
+    def timeseries_plot_clear_data(self, waterframes, start_time, stop_time,
+                                   path, cumulative):
+        """Makes plot of time series from waterframe parameter.
+        Parameters
+        ----------
+            waterframes: list
+                List of waterFrame objects to manage this data series.
+            start_time: str
+                String about start time to slice.
+            stop_time: str
+                String about stop time to slice.
+            path: str
+                String about path where are DATA.TXT files
+            cumulative: boolean, optional (cumulative = False)
+                It comes from a cumulative dataframe
+        """
+        # create new path to save plots
+        if cumulative:
+            newpath = os.path.join(path, 'cumulative', 'timeseries')
+        else:
+            newpath = os.path.join(path, 'non_cumulative', 'timeseries')
+        if not os.path.exists(newpath):
+            os.makedirs(newpath)
+
+        # Concat all waterframes and rename parameters
+        wf_all = mooda.WaterFrame()
+        names = []
+        for wf in waterframes:
+            name = wf.metadata["name"]
+            names.append(name)
+            wf_all.concat(wf)
+            for parameter in wf.parameters():
+                wf_all.rename(parameter, "{}_{}".format(parameter, name))
+
+        # slice time
+        wf_all.slice_time(start_time, stop_time)
+
+        match_CLEAR = [s for s in wf_all.parameters() if "CLEAR" in s]
+        axes = plt.gca()
+        wf_all.tsplot(keys=match_CLEAR, ax=axes)
+        if cumulative:
+            file_name = os.path.join(newpath, "time_series_cumulative")
+            plt.title('Time series cumulative')
+            plt.savefig("{}".format(file_name))
+            # plt.show()
+        else:
+            file_name = os.path.join(newpath, "time_series_non_cumulative")
+            plt.title('Time series non cumulative')
+            plt.savefig("{}".format(file_name))
+            # plt.show()
 
     def timeseries_buoy_plot(self, waterframes, start_time, stop_time, path,
                              cumulative):
@@ -318,7 +372,7 @@ class Data:
 
         # plot histogram
         match_CLEAR = [s for s in wf_all.parameters() if "CLEAR" in s]
-        wf_all.hist(parameter=match_CLEAR, mean_line=True)
+        wf_all.hist(parameter=match_CLEAR, mean_line=True)    
         plt.tight_layout()
         file_name = os.path.join(newpath, "all_data")
         plt.savefig("{}".format(file_name))
@@ -374,7 +428,7 @@ class Data:
                 param_name_1 = " ".join(re.findall("[a-zA-Z]+", combo[0]))
                 param_name_2 = " ".join(re.findall("[a-zA-Z]+", combo[1]))
                 # if name of parameters are the same (i.e. CLEAR == CLEAR)
-                if param_name_1 == param_name_2:
+                if (param_name_1 == param_name_2) and "CLEAR" in param_name_1:
                     where, value = wf_all.max_diff(combo[0], combo[1])
                     filewriter.writerow(["{}_{}".format(combo[0],
                                         combo[1]), where, value])
@@ -382,6 +436,11 @@ class Data:
         df = pd.read_csv(file_name)
         df.set_index("sensors")
         ax = df.plot.bar(x='sensors', y='max_diff')
+        ax.set_xlabel('sensorX_sensorY')
+        ax.set_ylabel('maximum difference in counts')
+        for label in (ax.get_xticklabels() + ax.get_yticklabels()):
+            label.set_fontsize(8)
+        ax.legend_.remove()
         plt.tight_layout()
         file_name = os.path.join(newpath, "all_data")
         plt.savefig("{}".format(file_name))
@@ -534,7 +593,15 @@ class Data:
         # save line plot
         file_name = os.path.join(newpath, "all_data")
         wf_resample.data.plot(x='rs', y=list_CLEAR)
-        plt.legend(loc='center left', bbox_to_anchor=(1, 0))
+        ax = plt.gca()
+        # Shrink current axis by 20%
+        box = ax.get_position()
+        ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
+        ax.set_xlabel('time (seconds)')
+        ax.set_ylabel('correlation (r2)')
+        # Put a legend to the right of the current axis
+        plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+
         plt.savefig("{}".format(file_name), bbox_inches='tight')
         # plt.show()
 
@@ -614,7 +681,7 @@ class Data:
             slope, intercept, r_value, p_value, std_err = stats.linregress(
                 depths_row_clear, row_clear)
             wf_all_copy.data.at[index, 'Kd_CLEAR'] = slope * (-1)
-            # print(r_value)
+            print(r_value)
 
             # RED
             row_red = wf_all_copy.data.loc[index, match_RED].tolist()
@@ -713,7 +780,6 @@ class Data:
         # HIST
         wf_all_copy.hist(parameter=['Kd_CLEAR', 'Kd_RED', 'Kd_GREEN',
                          'Kd_BLUE'], mean_line=True)
-        plt.title('Kd_HIST')
         plt.savefig("{}".format(file_name_Kd_HIST))
         # plt.show()
         plt.clf()
