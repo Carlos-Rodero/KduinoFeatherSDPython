@@ -328,11 +328,28 @@ class Data:
             max = wf_max[1]
             axes.set_ylim([0, max])
 
-            wf.tsplot(['RED', 'GREEN', 'BLUE', 'CLEAR'], rolling=1, ax=axes)
-            plt.title('Figure {}'.format(name))
-            plt.savefig("{}".format(file_name))
-            # plt.show()
-            plt.clf()
+            if cumulative:
+                wf.slice_time(start_time, stop_time)
+                axes = plt.gca()
+                # axes.set_ylim([0, max])
+                wf.tsplot(['RED', 'GREEN', 'BLUE', 'CLEAR'],
+                          ax=axes)
+                plt.title('Time series cumulative of module {}'.
+                          format(name))
+                plt.savefig("{}".format(file_name))
+                # plt.show()
+                plt.clf()
+            else:
+                wf.slice_time(start_time, stop_time)
+                axes = plt.gca()
+                # axes.set_ylim([0, max])
+                wf.tsplot(['RED', 'GREEN', 'BLUE', 'CLEAR'],
+                          ax=axes)
+                plt.title('Time series non cumulative of module {}'.
+                          format(name))
+                plt.savefig("{}".format(file_name))
+                # plt.show()
+                plt.clf()
 
     def hist_plot(self, waterframes, start_time, stop_time, path, cumulative):
         """Makes plots of histogram from waterframe parameter.
@@ -372,7 +389,7 @@ class Data:
 
         # plot histogram
         match_CLEAR = [s for s in wf_all.parameters() if "CLEAR" in s]
-        wf_all.hist(parameter=match_CLEAR, mean_line=True)    
+        wf_all.hist(parameter=match_CLEAR, mean_line=True)
         plt.tight_layout()
         file_name = os.path.join(newpath, "all_data")
         plt.savefig("{}".format(file_name))
@@ -487,7 +504,7 @@ class Data:
         # sensors
         match_CLEAR = [s for s in wf_all.parameters() if "CLEAR" in s]
         wf_all.scatter_matrix(keys=match_CLEAR)
-        plt.tight_layout()
+        plt.tight_layout(pad=0.4, w_pad=0.5, h_pad=1.0)
         file_name = os.path.join(newpath, "all_data")
         plt.savefig("{}".format(file_name))
         # plt.show()
@@ -598,7 +615,7 @@ class Data:
         box = ax.get_position()
         ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
         ax.set_xlabel('time (seconds)')
-        ax.set_ylabel('correlation (r2)')
+        ax.set_ylabel('correlation (Pearson)')
         # Put a legend to the right of the current axis
         plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
 
@@ -651,6 +668,9 @@ class Data:
         # convert depths list elements to float
         depths = list(map(float, depths))
 
+        # Discard elements from data that are < 100
+        
+
         # calculate ln from data and create columns Kd
         wf_all_copy.data = np.log(wf_all_copy.data)
         wf_all_copy.data['Kd_CLEAR'] = np.nan
@@ -664,69 +684,79 @@ class Data:
         match_GREEN = [s for s in wf_all_copy.parameters() if "GREEN" in s]
         match_BLUE = [s for s in wf_all_copy.parameters() if "BLUE" in s]
 
-        # iterate over waterframe to calculate Kds
-        for index, row in wf_all_copy.data.iterrows():
+        # create csv with time, kd and r2 results
+        file_name = os.path.join(newpath, "kd.csv")
+        with open(file_name, 'w', newline='') as csvfile:
+            filewriter = csv.writer(csvfile, delimiter=',',
+                                    quoting=csv.QUOTE_MINIMAL)
+            filewriter.writerow(["time", "kd", "r2"])
 
-            # CLEAR
-            row_clear = wf_all_copy.data.loc[index, match_CLEAR].tolist()
-            # get indices where element is Nan or Infinite
-            indices = [i for i, s in enumerate(row_clear) if np.isnan(s) or
-                       np.isinf(s)]
+            # iterate over waterframe to calculate Kds
+            for index, row in wf_all_copy.data.iterrows():
 
-            # delete null elements from lists
-            row_clear = np.delete(row_clear, indices).tolist()
-            depths_row_clear = np.delete(depths, indices).tolist()
+                # CLEAR
+                row_clear = wf_all_copy.data.loc[index, match_CLEAR].tolist()
+                # get indices where element is Nan or Infinite
+                indices = [i for i, s in enumerate(row_clear) if np.isnan(s) or
+                           np.isinf(s)]
 
-            # calculate Kd from linear regression
-            slope, intercept, r_value, p_value, std_err = stats.linregress(
-                depths_row_clear, row_clear)
-            wf_all_copy.data.at[index, 'Kd_CLEAR'] = slope * (-1)
-            print(r_value)
+                # delete null elements from lists
+                row_clear = np.delete(row_clear, indices).tolist()
+                depths_row_clear = np.delete(depths, indices).tolist()
 
-            # RED
-            row_red = wf_all_copy.data.loc[index, match_RED].tolist()
-            # get indices where element is Nan or Infinite
-            indices = [i for i, s in enumerate(row_red) if np.isnan(s) or
-                       np.isinf(s)]
+                # calculate Kd from linear regression
+                slope, intercept, r_value, p_value, std_err = stats.linregress(
+                    depths_row_clear, row_clear)
+                wf_all_copy.data.at[index, 'Kd_CLEAR'] = slope * (-1)
+                # print(r_value)
 
-            # delete null elements from lists
-            row_red = np.delete(row_red, indices).tolist()
-            depths_row_red = np.delete(depths, indices).tolist()
+                # save values to csv
+                filewriter.writerow([index, slope * (-1), r_value])
 
-            # calculate Kd from linear regression
-            slope, intercept, r_value, p_value, std_err = stats.linregress(
-                depths_row_red, row_red)
-            wf_all_copy.data.at[index, 'Kd_RED'] = slope * (-1)
+                # RED
+                row_red = wf_all_copy.data.loc[index, match_RED].tolist()
+                # get indices where element is Nan or Infinite
+                indices = [i for i, s in enumerate(row_red) if np.isnan(s) or
+                           np.isinf(s)]
 
-            # GREEN
-            row_green = wf_all_copy.data.loc[index, match_GREEN].tolist()
-            # get indices where element is Nan or Infinite
-            indices = [i for i, s in enumerate(row_green) if np.isnan(s) or
-                       np.isinf(s)]
+                # delete null elements from lists
+                row_red = np.delete(row_red, indices).tolist()
+                depths_row_red = np.delete(depths, indices).tolist()
 
-            # delete null elements from lists
-            row_green = np.delete(row_green, indices).tolist()
-            depths_row_green = np.delete(depths, indices).tolist()
+                # calculate Kd from linear regression
+                slope, intercept, r_value, p_value, std_err = stats.linregress(
+                    depths_row_red, row_red)
+                wf_all_copy.data.at[index, 'Kd_RED'] = slope * (-1)
 
-            # calculate Kd from linear regression
-            slope, intercept, r_value, p_value, std_err = stats.linregress(
-                depths_row_green, row_green)
-            wf_all_copy.data.at[index, 'Kd_GREEN'] = slope * (-1)
+                # GREEN
+                row_green = wf_all_copy.data.loc[index, match_GREEN].tolist()
+                # get indices where element is Nan or Infinite
+                indices = [i for i, s in enumerate(row_green) if np.isnan(s) or
+                           np.isinf(s)]
 
-            # BLUE
-            row_blue = wf_all_copy.data.loc[index, match_BLUE].tolist()
-            # get indices where element is Nan or Infinite
-            indices = [i for i, s in enumerate(row_blue) if np.isnan(s) or
-                       np.isinf(s)]
+                # delete null elements from lists
+                row_green = np.delete(row_green, indices).tolist()
+                depths_row_green = np.delete(depths, indices).tolist()
 
-            # delete null elements from lists
-            row_blue = np.delete(row_blue, indices).tolist()
-            depths_row_blue = np.delete(depths, indices).tolist()
+                # calculate Kd from linear regression
+                slope, intercept, r_value, p_value, std_err = stats.linregress(
+                    depths_row_green, row_green)
+                wf_all_copy.data.at[index, 'Kd_GREEN'] = slope * (-1)
 
-            # calculate Kd from linear regression
-            slope, intercept, r_value, p_value, std_err = stats.linregress(
-                depths_row_blue, row_blue)
-            wf_all_copy.data.at[index, 'Kd_BLUE'] = slope * (-1)
+                # BLUE
+                row_blue = wf_all_copy.data.loc[index, match_BLUE].tolist()
+                # get indices where element is Nan or Infinite
+                indices = [i for i, s in enumerate(row_blue) if np.isnan(s) or
+                           np.isinf(s)]
+
+                # delete null elements from lists
+                row_blue = np.delete(row_blue, indices).tolist()
+                depths_row_blue = np.delete(depths, indices).tolist()
+
+                # calculate Kd from linear regression
+                slope, intercept, r_value, p_value, std_err = stats.linregress(
+                    depths_row_blue, row_blue)
+                wf_all_copy.data.at[index, 'Kd_BLUE'] = slope * (-1)
 
         # print(wf_all_copy.data)
         # save Kd plots
@@ -738,41 +768,42 @@ class Data:
         file_name_Kd_HIST = os.path.join(newpath, "Kd_HIST")
 
         # CLEAR
-        wf_all_copy.tsplot(['Kd_CLEAR'],
-                           rolling=1)
-        plt.title('Kd_CLEAR')
+        ax = wf_all_copy.tsplot(['Kd_CLEAR'])
+        ax.set_ylabel('Kd')
+        plt.title('Kd CLEAR')
         plt.savefig("{}".format(file_name_Kd_CLEAR))
         # plt.show()
         plt.clf()
 
         # RED
-        wf_all_copy.tsplot(['Kd_RED'],
-                           rolling=1)
-        plt.title('Kd_RED')
+        ax = wf_all_copy.tsplot(['Kd_RED'])
+        ax.set_ylabel('Kd')
+        plt.title('Kd RED')
         plt.savefig("{}".format(file_name_Kd_RED))
         # plt.show()
         plt.clf()
 
         # GREEN
-        wf_all_copy.tsplot(['Kd_GREEN'],
-                           rolling=1)
-        plt.title('Kd_GREEN')
+        ax = wf_all_copy.tsplot(['Kd_GREEN'])
+        ax.set_ylabel('Kd')
+        plt.title('Kd GREEN')
         plt.savefig("{}".format(file_name_Kd_GREEN))
         # plt.show()
         plt.clf()
 
         # BLUE
-        wf_all_copy.tsplot(['Kd_BLUE'],
-                           rolling=1)
-        plt.title('Kd_BLUE')
+        ax = wf_all_copy.tsplot(['Kd_BLUE'])
+        ax.set_ylabel('Kd')
+        plt.title('Kd BLUE')
         plt.savefig("{}".format(file_name_Kd_BLUE))
         # plt.show()
         plt.clf()
 
         # ALL
-        wf_all_copy.tsplot(['Kd_CLEAR', 'Kd_RED', 'Kd_GREEN', 'Kd_BLUE'],
-                           rolling=1)
-        plt.title('Kd_ALL')
+        ax = wf_all_copy.tsplot(['Kd_CLEAR', 'Kd_RED', 'Kd_GREEN', 'Kd_BLUE'],
+                                rolling=1)
+        ax.set_ylabel('Kd')
+        plt.title('Kd ALL')
         plt.savefig("{}".format(file_name_Kd_ALL))
         # plt.show()
         plt.clf()
@@ -780,6 +811,7 @@ class Data:
         # HIST
         wf_all_copy.hist(parameter=['Kd_CLEAR', 'Kd_RED', 'Kd_GREEN',
                          'Kd_BLUE'], mean_line=True)
+        plt.tight_layout()
         plt.savefig("{}".format(file_name_Kd_HIST))
         # plt.show()
         plt.clf()

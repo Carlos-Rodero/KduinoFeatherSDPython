@@ -40,8 +40,8 @@ def main():
                     cumulative=cumulative) """
 
         # max diff
-        d.max_diff_sensors(waterframes, start_time, stop_time, path,
-                           cumulative=cumulative)
+        """ d.max_diff_sensors(waterframes, start_time, stop_time, path,
+                           cumulative=cumulative) """
 
         # scatter matrix
         """ d.scatter_matrix(waterframes, start_time, stop_time, path,
@@ -56,8 +56,13 @@ def main():
         """ d.timeseries_buoy_plot(waterframes, start_time, stop_time, path,
                                cumulative=cumulative) """
         # kd plot
-        """ d.kd_plot(waterframes, start_time, stop_time, path,
-                  cumulative=cumulative) """
+        d.kd_plot(waterframes, start_time, stop_time, path,
+                  cumulative=cumulative)
+
+    def analysis_profiler(start_time, stop_time):
+        # timeseries plot
+        """ d.timeseries_individual_plot(waterframes, start_time, stop_time, path,
+                                     cumulative=cumulative) """
 
     """ Analysis Fake data """
     # analysis_tray('20180731113500', '20180731114500')
@@ -67,10 +72,14 @@ def main():
     # analysis_tray('20180821133200', '20180821134500')
 
     """ Analysis Loch Leven Tray """
-    analysis_tray('20180822121700', '20180822122300')
+    # analysis_tray('20180822121700', '20180822122300')
 
     """ Analysis Loch Leven Buoy """
     # analysis_buoy('20180822115000', '20180822150000')
+
+    """ Analysis Stirling Profiler """
+    
+    # analysis_profiler('20180821133200', '20180821134500')
 
 if __name__ == "__main__":
     main()
