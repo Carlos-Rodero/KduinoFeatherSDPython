@@ -669,7 +669,8 @@ class Data:
         depths = list(map(float, depths))
 
         # Discard elements from data that are < 100
-        
+        wf_all_copy.data = wf_all_copy.data.mask(wf_all_copy.data < 10, 0)
+        # print(wf_all_copy.data)
 
         # calculate ln from data and create columns Kd
         wf_all_copy.data = np.log(wf_all_copy.data)
@@ -709,6 +710,10 @@ class Data:
                     depths_row_clear, row_clear)
                 wf_all_copy.data.at[index, 'Kd_CLEAR'] = slope * (-1)
                 # print(r_value)
+                """ print(index)
+                print("CLEAR")
+                print(row_clear)
+                print(wf_all_copy.data.at[index, 'Kd_CLEAR']) """
 
                 # save values to csv
                 filewriter.writerow([index, slope * (-1), r_value])
@@ -728,6 +733,10 @@ class Data:
                     depths_row_red, row_red)
                 wf_all_copy.data.at[index, 'Kd_RED'] = slope * (-1)
 
+                """ print("RED")
+                print(row_red)
+                print(wf_all_copy.data.at[index, 'Kd_RED']) """
+
                 # GREEN
                 row_green = wf_all_copy.data.loc[index, match_GREEN].tolist()
                 # get indices where element is Nan or Infinite
@@ -742,6 +751,10 @@ class Data:
                 slope, intercept, r_value, p_value, std_err = stats.linregress(
                     depths_row_green, row_green)
                 wf_all_copy.data.at[index, 'Kd_GREEN'] = slope * (-1)
+
+                """ print("GREEN")
+                print(row_green)
+                print(wf_all_copy.data.at[index, 'Kd_GREEN']) """
 
                 # BLUE
                 row_blue = wf_all_copy.data.loc[index, match_BLUE].tolist()
@@ -758,6 +771,10 @@ class Data:
                     depths_row_blue, row_blue)
                 wf_all_copy.data.at[index, 'Kd_BLUE'] = slope * (-1)
 
+                """ print("BLUE")
+                print(row_blue)
+                print(wf_all_copy.data.at[index, 'Kd_BLUE']) """
+
         # print(wf_all_copy.data)
         # save Kd plots
         file_name_Kd_CLEAR = os.path.join(newpath, "Kd_CLEAR")
@@ -768,7 +785,7 @@ class Data:
         file_name_Kd_HIST = os.path.join(newpath, "Kd_HIST")
 
         # CLEAR
-        ax = wf_all_copy.tsplot(['Kd_CLEAR'])
+        ax = wf_all_copy.tsplot(['Kd_CLEAR'], rolling=1)
         ax.set_ylabel('Kd')
         plt.title('Kd CLEAR')
         plt.savefig("{}".format(file_name_Kd_CLEAR))
@@ -776,7 +793,7 @@ class Data:
         plt.clf()
 
         # RED
-        ax = wf_all_copy.tsplot(['Kd_RED'])
+        ax = wf_all_copy.tsplot(['Kd_RED'], rolling=1)
         ax.set_ylabel('Kd')
         plt.title('Kd RED')
         plt.savefig("{}".format(file_name_Kd_RED))
@@ -784,7 +801,7 @@ class Data:
         plt.clf()
 
         # GREEN
-        ax = wf_all_copy.tsplot(['Kd_GREEN'])
+        ax = wf_all_copy.tsplot(['Kd_GREEN'], rolling=1)
         ax.set_ylabel('Kd')
         plt.title('Kd GREEN')
         plt.savefig("{}".format(file_name_Kd_GREEN))
@@ -792,7 +809,7 @@ class Data:
         plt.clf()
 
         # BLUE
-        ax = wf_all_copy.tsplot(['Kd_BLUE'])
+        ax = wf_all_copy.tsplot(['Kd_BLUE'], rolling=1)
         ax.set_ylabel('Kd')
         plt.title('Kd BLUE')
         plt.savefig("{}".format(file_name_Kd_BLUE))
